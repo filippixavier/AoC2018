@@ -1,0 +1,6 @@
+[package]
+name = "AoC2018"
+version = "0.1.0"
+authors = ["Xavier Filippi <gueltir@gmail.com>"]
+
+[dependencies]
