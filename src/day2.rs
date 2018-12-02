@@ -34,3 +34,28 @@ fn firstStar() -> Result<(), Box<Error + 'static>> {
 
     Ok(())
 }
+
+fn secondStar() -> Result<(), Box<Error + 'static>> {
+    // Need to put the file opening in another variable else we would get a lifetime error
+    let file = fs::read_to_string(Path::new("./data/day2.txt"))?;
+    let input: Vec<&str> = file.trim().split('\n').map(|x| x.trim()).collect();
+
+    for i in 0..input.len() {
+        // Because all strings are encoded into utf8, we can't directly access a char by index (Rust would throw an error), so instead we turn a string into a vector of chars
+        let first_code: Vec<_> = input[i].chars().collect();
+        for j in i + 1..input.len() {
+            let mut count = 0;
+            let answer = input[j].chars().filter(|&x| {
+                let cmp = first_code[count] == x;
+                count += 1;
+                cmp
+            }).collect::<String>();
+            if first_code.len() - answer.len() == 1 {
+                println!("Id is: {}\n original are:\n{}\n{}", answer, input[i], input[j]);
+                break;
+            }
+        }
+    }
+
+    Ok(())
+}
