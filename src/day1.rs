@@ -11,7 +11,9 @@ fn firstStar() -> Result<(), Box<Error + 'static>> {
 fn secondStar() -> Result<(), Box<Error: 'static>> {
     let mut found_frequency = HashSet::new();
     found_frequency.insert(0);
-    let input = fs::read_to_string(Path::new("./data/day1.txt"))?.trim().split('\n').map( |x| x.trim().parse::<i32>().unwrap_or(0)).collect::<Vec<i32>>();
+    // Note: if the data file was on the same level as the source file, juste use the include_str! macro
+    // Note that this time we trim the input beforehand as the 0 would lead to a falsy result
+    let input = fs::read_to_string(Path::new("./data/day1.txt"))?.trim().split('\n').map( |x| x.trim().parse::<i32>().unwrap()).collect::<Vec<i32>>();
     let mut acc = 0;
 
     for frequency in input.iter().cycle() {
