@@ -8,7 +8,7 @@ fn firstStar() -> Result<(), Box<Error + 'static>> {
     Ok(())
 }
 
-fn secondStar() -> Result<(), Box<Error: 'static>> {
+fn secondStar() -> Result<(), Box<Error + 'static>> {
     let mut found_frequency = HashSet::new();
     found_frequency.insert(0);
     // Note: if the data file was on the same level as the source file, juste use the include_str! macro
