@@ -9,12 +9,12 @@ use std::cmp::Ordering;
 use regex::Regex;
 use regex::Captures;
 
-fn first_star() -> Result<(), Box<Error + 'static>>{
+fn main() -> Result<(), Box<Error + 'static>>{
     let file = fs::read_to_string(Path::new("./data/day4.txt"))?.trim().to_string();
     let mut input = file.lines().collect::<Vec<_>>();
     let id_reg = Regex::new(r"#(\d+)").unwrap();
     let date_reg = Regex::new(r"(?:\d+)-(\d+)-(\d+) (\d+):(\d+)").unwrap();
-    let mut time_table: HashMap<String, [i32; 61]> = HashMap::new();
+    let mut time_table: TimeTable = HashMap::new();
     input.sort_by(|&a, &b| {
         let date_a = date_reg.captures(a).unwrap();
         let date_b = date_reg.captures(b).unwrap();
@@ -43,32 +43,9 @@ fn first_star() -> Result<(), Box<Error + 'static>>{
             }
         }
     }
-
-    let mut max = 0;
-    let mut id = "0";
-    for (key, val) in time_table.iter() {
-        max = if max < val[60] {
-            id = key;
-            val[60]
-        } else {
-            max
-        }
-    }
-
-    let sleepy_guard = time_table.get(id).unwrap();
-    max = 0;
-    let mut hour = 0;
-
-    for i in 0..60 {
-        max = if max < sleepy_guard[i] {
-            hour = i;
-            sleepy_guard[i]
-        } else {
-            max
-        }
-    }
     
-    println!("\n{}", hour * id.parse::<usize>().unwrap());
+    println!("Sleepiest guard:\n{}", sleepiest_guard(&time_table));
+    println!("Sleepiest minute:\n{}", sleepliest_minute(&time_table));
 
     Ok(())
 }
@@ -106,3 +83,53 @@ fn fill_timeline(start: usize, end: usize, id: &str, time_table: &mut HashMap<St
 
     time_table.insert(id.to_string(), table);
 }
+
+fn sleepiest_guard (time_table: &TimeTable) -> usize {
+    let mut max = 0;
+    let mut id = "0";
+    for (key, val) in time_table.iter() {
+        max = if max < val[60] {
+            id = key;
+            val[60]
+        } else {
+            max
+        }
+    }
+
+    let sleepy_guard = time_table.get(id).unwrap();
+    max = 0;
+    let mut hour = 0;
+
+    for i in 0..60 {
+        max = if max < sleepy_guard[i] {
+            hour = i;
+            sleepy_guard[i]
+        } else {
+            max
+        }
+    };
+    hour * id.parse::<usize>().unwrap()
+}
+
+fn sleepliest_minute(time_table: &TimeTable) -> usize {
+    let mut id = "0";
+    let mut max_sleep_per_minute = 0;
+    let mut sleepy_minute = 0;
+
+    for (key, value) in time_table.iter() {
+        for i in 0..60 {
+            max_sleep_per_minute = if value[i] > max_sleep_per_minute {
+                id = key;
+                sleepy_minute = i;
+                value[i]
+            } else {
+                max_sleep_per_minute
+            }
+        }
+    }
+    // 30343 too low
+
+    sleepy_minute * id.parse::<usize>().unwrap()
+}
+
+type TimeTable = HashMap<String, [i32; 61]>;
