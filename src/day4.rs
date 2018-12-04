@@ -6,10 +6,10 @@ use std::path::Path;
 use std::collections::HashMap;
 use std::cmp::Ordering;
 
-use regex::Regex;
-use regex::Captures;
+use self::regex::Regex;
+use self::regex::Captures;
 
-fn main() -> Result<(), Box<Error + 'static>>{
+pub fn first_star() -> Result<(), Box<Error + 'static>>{
     let file = fs::read_to_string(Path::new("./data/day4.txt"))?.trim().to_string();
     let mut input = file.lines().collect::<Vec<_>>();
     let id_reg = Regex::new(r"#(\d+)").unwrap();
@@ -49,6 +49,11 @@ fn main() -> Result<(), Box<Error + 'static>>{
 
     Ok(())
 }
+
+pub fn second_star() -> Result<(), Box<Error + 'static>> {
+    first_star()
+}
+
 
 // Could have been a lot easier if I used the Chrono crate...
 fn compare(a: &Captures, b: &Captures) -> Ordering {
