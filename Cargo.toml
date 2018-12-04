@@ -5,3 +5,11 @@ authors = ["Xavier Filippi <gueltir@gmail.com>"]
 
 [dependencies]
 regex = "1.1.0"
+
+[features]
+default = ["day1"]
+day1 = []
+day2 = ["nday"]
+day3 = ["nday"]
+day4 = ["nday"]
+nday = []
