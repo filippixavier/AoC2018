@@ -9,7 +9,7 @@ use std::cmp::Ordering;
 use regex::Regex;
 use regex::Captures;
 
-fn main() -> Result<(), Box<Error + 'static>>{
+fn first_star() -> Result<(), Box<Error + 'static>>{
     let file = fs::read_to_string(Path::new("./data/day4.txt"))?.trim().to_string();
     let mut input = file.lines().collect::<Vec<_>>();
     let id_reg = Regex::new(r"#(\d+)").unwrap();
@@ -67,11 +67,8 @@ fn main() -> Result<(), Box<Error + 'static>>{
             max
         }
     }
-
-    for i in 0..60 {
-        print!("{}", i);
-    }
-    println!("\n{}", hour * max as usize);
+    
+    println!("\n{}", hour * id.parse::<usize>().unwrap());
 
     Ok(())
 }
