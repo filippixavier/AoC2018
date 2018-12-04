@@ -3,7 +3,7 @@ use std::fs;
 use std::path::Path;
 use std::collections::HashMap;
 
-fn firstStar() -> Result<(), Box<Error + 'static>> {
+fn first_star() -> Result<(), Box<Error + 'static>> {
     // Need to put the file opening in another variable else we would get a lifetime error
     let file = fs::read_to_string(Path::new("./data/day2.txt"))?;
     let input = file.trim().split('\n');
@@ -35,7 +35,7 @@ fn firstStar() -> Result<(), Box<Error + 'static>> {
     Ok(())
 }
 
-fn secondStar() -> Result<(), Box<Error + 'static>> {
+fn second_star() -> Result<(), Box<Error + 'static>> {
     // Need to put the file opening in another variable else we would get a lifetime error
     let file = fs::read_to_string(Path::new("./data/day2.txt"))?;
     let input: Vec<&str> = file.trim().split('\n').map(|x| x.trim()).collect();
