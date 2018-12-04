@@ -50,6 +50,7 @@ fn main() -> Result<(), Box<Error + 'static>>{
     Ok(())
 }
 
+// Could have been a lot easier if I used the Chrono crate...
 fn compare(a: &Captures, b: &Captures) -> Ordering {
     let month = [a.get(1).unwrap().as_str().parse::<usize>().unwrap(), b.get(1).unwrap().as_str().parse::<usize>().unwrap()];
     let day = [a.get(2).unwrap().as_str().parse::<usize>().unwrap(), b.get(2).unwrap().as_str().parse::<usize>().unwrap()];
