@@ -37,19 +37,12 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
                     //Systematically recalculate manhattan distance
                     let (temp_id, temp_dist) = match map.get(&(temp_x, temp_y)) {
                         Some((claiming_id, claiming_dist)) => {
-                            if *claiming_dist > min(manhattan_dist, other_manhattan_dist) {
+                            if *claiming_dist > manhattan_dist {
                                 if let Some(previous_area) = area_h.get_mut(claiming_id) {
                                     *previous_area -= 1;
                                 }
-                                let result_id = if manhattan_dist > other_manhattan_dist {
-                                    other_id.clone()
-                                } else if other_manhattan_dist > manhattan_dist {
-                                    area += 1;
-                                    new_pt_id.to_string()
-                                } else {
-                                    ".".to_string()
-                                };
-                                (result_id, min(manhattan_dist, other_manhattan_dist))
+                                area += 1;
+                                (new_pt_id.to_string(), manhattan_dist)
                             } else if *claiming_dist == manhattan_dist {
                                 if let Some(previous_area) = area_h.get_mut(claiming_id) {
                                     *previous_area -= 1;
@@ -62,6 +55,9 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
                         }
                         None => {
                             if manhattan_dist > other_manhattan_dist {
+                                if let Some(previous_area) = area_h.get_mut(other_id) {
+                                    *previous_area += 1;
+                                }
                                 (other_id.clone(), other_manhattan_dist)
                             } else if manhattan_dist == other_manhattan_dist {
                                 (".".to_string(), manhattan_dist)
@@ -78,6 +74,14 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
         ids.insert(new_pt_id.to_string(), (x, y));
         area_h.insert(new_pt_id.to_string(), area);
     }
+    let mut answer = 0;
+
+    for val in area_h.values() {
+        answer = max(answer, *val);
+    }
+
+    println!("Biggest safe area: {}", answer);
+
     Ok(())
 }
 
