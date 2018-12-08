@@ -12,6 +12,8 @@ mod day4;
 mod day5;
 #[cfg(feature = "day6")]
 mod day6;
+#[cfg(feature = "day7")]
+mod day7;
 
 
 #[cfg(all(feature = "day1", not(feature = "nday")))]
@@ -23,9 +25,11 @@ use day3::*;
 #[cfg(feature = "day4")]
 use day4::*;
 #[cfg(feature = "day5")]
-mod day5;
+use day5;
 #[cfg(feature = "day6")]
-mod day6;
+use day6;
+#[cfg(feature = "day7")]
+use day7;
 
 
 fn main() {
