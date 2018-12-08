@@ -1,4 +1,3 @@
-// 3306 => too high
 extern crate regex;
 
 use std::error::Error;
