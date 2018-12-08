@@ -24,7 +24,7 @@ struct Point {
 
 
 /**
- * Algo main
+ * Algo first_star
  * Init
  *     Liste: liste de point Source
  *     map: tableau avec point Source placé
@@ -75,7 +75,6 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
     let mut max_area = 0;
     
     for source in sources_list.values() {
-        // println!("{:?}", source);
         if max_area < source.area && !source.infinite {
             max_area = source.area;
         }
@@ -96,7 +95,7 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
  *     pN: point à vérifier
  *
  * Debut
- *     Si !Infiny(point, p[1..4], liste) 
+ *     Si !is_infinite(point, p[1..4], liste) 
  *         Si map[pN.coord] existe ET map[pN.coord].owner != pN.owner  
  *             Si pN.dist < map[pN.coord].dist
  *                 list[map[pN.coord].owner].area --
@@ -159,7 +158,7 @@ fn claim_cell(sources_list: &mut HashMap<(i32, i32), Source>, map: &mut HashMap<
 }
 
 /**
- * Algo Infinity
+ * Algo is_infinite
  * Init
  *     pS: point de départ
  *     pE: point d'arrivée
@@ -183,6 +182,100 @@ fn is_infinite(p_start: (i32, i32), p_end: (i32, i32), sources: &HashMap<(i32, i
     })
 }
 
+const MAX_MANHATTAN_DIST: i32 = 10000;
+
+/**
+ * Algo second_star
+ * Init
+ *     min_x: plus petite abscisse parmis les Sources
+ *     min_y: plus petite ordonnée parmis les Sources
+ *     max_x: plus grande abscisse parmis les Sources
+ *     max_y: plus grande ordonnée parmis les Sources
+ *     sources: liste de sources
+ * Debut
+ *     Soit area := 0 surface initial
+ *     Pour tout x de min_x a max_x
+ *         Pour tout y de min_y a max_y
+ *             si valid_cell
+ *                 area++;
+ *     fin Pour
+ *     Retourner area
+ * Fin
+ */
 pub fn second_star() -> Result<(), Box<Error + 'static>> {
+    let input = fs::read_to_string(Path::new("./data/day6.txt"))?;
+    let reg = Regex::new(r"(?P<x>\d+), (?P<y>\d+)").unwrap();
+    
+    let mut sources = Vec::<(i32, i32)>::new();
+
+    let mut area = 0;
+    let (mut min_x, mut min_y, mut max_x, mut max_y) = (0, 0, MAX_MANHATTAN_DIST, MAX_MANHATTAN_DIST);
+
+    for capture in reg.captures_iter(&input) {
+        let (x, y) = (capture.get(1).unwrap().as_str().parse::<i32>().unwrap(), capture.get(2).unwrap().as_str().parse::<i32>().unwrap());
+        sources.push((x, y));
+        min_y = if min_y > y {
+            y
+        } else {
+            min_y
+        };
+
+        min_x = if min_x > x {
+            x
+        } else {
+            min_x
+        };
+
+        max_y = if max_y < y {
+            y
+        } else {
+            max_y
+        };
+
+        max_x = if max_x < x {
+            y
+        } else {
+            max_x
+        };
+    }
+
+    for x in min_x..max_x {
+        for y in min_y..max_y {
+            if valid_cell((x, y), &sources) {
+                area += 1;
+            }
+        }
+    }
+
+    println!("Valid area: {}", area);
+
     Ok(())
+}
+
+/**
+ * Algo valid_cell
+ * Init
+ *     pt: point à comparer
+ *     sources: liste de points
+ * Debut
+ *     soit total := 0
+ *     Pour chaques point de sources
+ *         total += (abs(pt.x - point.x) + abs(pt.y - point.y))
+ *         Si total > MAX
+ *             retourne faux
+ *         fin Si
+ *     fin Pour
+ *     retourne vrai
+ * Fin
+ */
+
+fn valid_cell(pt: (i32, i32), sources: &Vec<(i32, i32)>) -> bool {
+    let mut total = 0;
+    for source in sources {
+        total += (pt.0 - source.0).abs() + (pt.1 - source.1).abs();
+        if total > MAX_MANHATTAN_DIST {
+            return false;
+        }
+    }
+    return true;
 }
