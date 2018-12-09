@@ -9,8 +9,8 @@ use std::collections::HashMap;
 use self::regex::Regex;
 
 
-pub fn first_star() -> Result<(), Box<Error + 'static>> {
-    let input = fs::read_to_string(Path::new("./data/day7.txt"))?;
+fn prepare_inputs() -> (HashMap<String, Vec<String>>, HashMap<String, Vec<String>>, Vec<String>){
+    let input = fs::read_to_string(Path::new("./data/day7.txt")).unwrap();
     let reg = Regex::new(r"Step (\w) .* step (\w)").unwrap();
 
     let mut parent_to_childs = HashMap::<String, Vec<String>>::new();
@@ -44,12 +44,17 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
     }
 
     let mut nodes_to_check = Vec::<String>::new();
-    let mut answer = String::new();
     for (id, parents) in child_to_parents.iter() {
         if parents.is_empty() {
             nodes_to_check.push(id.clone());
         }
     }
+    (parent_to_childs, child_to_parents, nodes_to_check)
+}
+
+pub fn first_star() -> Result<(), Box<Error + 'static>> {
+    let (parent_to_childs, mut child_to_parents, mut nodes_to_check) = prepare_inputs();
+    let mut answer = String::new();
 
     while !nodes_to_check.is_empty() {
         nodes_to_check.sort_by(|a, b| b.cmp(a));
@@ -67,10 +72,72 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
     }
 
     println!("Order is: {}", answer);
-
     Ok(())
 }
 
+static MAX_WORKER: usize = 6;
+
+#[derive(Debug)]
+struct Worker {
+    countdown: i32,
+    id: String
+}
+
 pub fn second_star() -> Result<(), Box<Error + 'static>> {
+    const MIN_DURATION: i32 = 60;
+    
+    let alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".to_string();
+    
+    let mut answer = String::new();
+    let mut id_to_duration = HashMap::<String, i32>::new();
+    let mut count = 1;
+
+    for letter in alpha.chars() {
+        id_to_duration.insert(letter.to_string(), count);
+        count += 1;
+    }
+
+    count = -1;
+
+    let mut workers = Vec::<Worker>::new();
+    let (parent_to_childs, mut child_to_parents, mut nodes_to_check) = prepare_inputs();
+
+    while !(nodes_to_check.is_empty() && workers.is_empty()) {
+        let mut workers_done = Vec::<usize>::new();
+        let mut index: usize = 0;
+        for worker in workers.iter_mut() {
+            worker.countdown -= 1;
+            if worker.countdown == 0 {
+                workers_done.push(index);
+            }
+            index += 1;
+        }
+
+        workers_done.reverse();
+
+        for posi in workers_done {
+            let worker = workers.remove(posi);
+            for child_id in parent_to_childs.get(&worker.id).unwrap() {
+                if let Some(parents) = child_to_parents.get_mut(child_id) {
+                    let posi = parents.iter().position(|x| *x == worker.id).unwrap();
+                    parents.remove(posi);
+                    if parents.is_empty() {
+                        nodes_to_check.push(child_id.clone());
+                    }
+                }
+            }
+            answer.push_str(&worker.id);
+        }
+
+        nodes_to_check.sort_by(|a, b| b.cmp(a));
+        while !nodes_to_check.is_empty() && workers.len() < MAX_WORKER {
+            let id = nodes_to_check.pop().unwrap();
+            let countdown = id_to_duration.get(&id).unwrap() + MIN_DURATION;
+            workers.push(Worker{countdown, id});
+        }
+        count += 1;
+    } 
+
+    println!("Order: {}, time: {}", answer, count);
     Ok(())
 }
