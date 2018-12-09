@@ -25,11 +25,11 @@ use day3::*;
 #[cfg(feature = "day4")]
 use day4::*;
 #[cfg(feature = "day5")]
-use day5;
+use day5::*;
 #[cfg(feature = "day6")]
-use day6;
+use day6::*;
 #[cfg(feature = "day7")]
-use day7;
+use day7::*;
 
 
 fn main() {
