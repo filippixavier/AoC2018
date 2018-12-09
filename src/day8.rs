@@ -9,9 +9,9 @@ use std::collections::HashMap;
 use self::regex::Regex;
 
 pub fn first_star() -> Result<(), Box<Error + 'static>> {
- Ok(())
+    Ok(())
 }
 
 pub fn second_star() -> Result<(), Box<Error + 'static>> {
-	Ok(())
+    Ok(())
 }

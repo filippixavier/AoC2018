@@ -18,9 +18,8 @@ struct Source {
 struct Point {
     coord: (i32, i32),
     dist: i32,
-    owner: Option<(i32, i32)>
+    owner: Option<(i32, i32)>,
 }
-
 
 /**
  * Algo first_star
@@ -52,27 +51,80 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
 
     let mut sources_list = HashMap::<(i32, i32), Source>::new();
     let mut map = HashMap::<(i32, i32), Point>::new();
-    let mut heap = Vec::<Point>::new(); 
+    let mut heap = Vec::<Point>::new();
 
     for capture in reg.captures_iter(&input) {
-        let (x, y) = (capture.get(1).unwrap().as_str().parse::<i32>().unwrap(), capture.get(2).unwrap().as_str().parse::<i32>().unwrap());
-        let source_point = Point{coord: (x, y), dist: 0, owner: Some((x, y))};
-        sources_list.insert((x, y), Source{area: 1, infinite: false});
+        let (x, y) = (
+            capture.get(1).unwrap().as_str().parse::<i32>().unwrap(),
+            capture.get(2).unwrap().as_str().parse::<i32>().unwrap(),
+        );
+        let source_point = Point {
+            coord: (x, y),
+            dist: 0,
+            owner: Some((x, y)),
+        };
+        sources_list.insert(
+            (x, y),
+            Source {
+                area: 1,
+                infinite: false,
+            },
+        );
         map.insert((x, y), source_point);
         heap.insert(0, source_point);
     }
 
     while heap.len() > 0 {
         let p_start = heap.pop().unwrap();
-        claim_cell(&mut sources_list, &mut map, &mut heap, p_start, Point{coord: (p_start.coord.0 + 1, p_start.coord.1), dist: p_start.dist + 1, owner: p_start.owner});
-        claim_cell(&mut sources_list, &mut map, &mut heap, p_start, Point{coord: (p_start.coord.0 - 1, p_start.coord.1), dist: p_start.dist + 1, owner: p_start.owner});
+        claim_cell(
+            &mut sources_list,
+            &mut map,
+            &mut heap,
+            p_start,
+            Point {
+                coord: (p_start.coord.0 + 1, p_start.coord.1),
+                dist: p_start.dist + 1,
+                owner: p_start.owner,
+            },
+        );
+        claim_cell(
+            &mut sources_list,
+            &mut map,
+            &mut heap,
+            p_start,
+            Point {
+                coord: (p_start.coord.0 - 1, p_start.coord.1),
+                dist: p_start.dist + 1,
+                owner: p_start.owner,
+            },
+        );
 
-        claim_cell(&mut sources_list, &mut map, &mut heap, p_start, Point{coord: (p_start.coord.0, p_start.coord.1 + 1), dist: p_start.dist + 1, owner: p_start.owner});
-        claim_cell(&mut sources_list, &mut map, &mut heap, p_start, Point{coord: (p_start.coord.0, p_start.coord.1 - 1), dist: p_start.dist + 1, owner: p_start.owner});
+        claim_cell(
+            &mut sources_list,
+            &mut map,
+            &mut heap,
+            p_start,
+            Point {
+                coord: (p_start.coord.0, p_start.coord.1 + 1),
+                dist: p_start.dist + 1,
+                owner: p_start.owner,
+            },
+        );
+        claim_cell(
+            &mut sources_list,
+            &mut map,
+            &mut heap,
+            p_start,
+            Point {
+                coord: (p_start.coord.0, p_start.coord.1 - 1),
+                dist: p_start.dist + 1,
+                owner: p_start.owner,
+            },
+        );
     }
 
     let mut max_area = 0;
-    
+
     for source in sources_list.values() {
         if max_area < source.area && !source.infinite {
             max_area = source.area;
@@ -94,7 +146,7 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
  *     pN: point à vérifier
  *
  * Debut
- *     Si !is_infinite(point, p[1..4], liste) 
+ *     Si !is_infinite(point, p[1..4], liste)
  *         Si map[pN.coord] existe ET map[pN.coord].owner != pN.owner  
  *             Si pN.dist < map[pN.coord].dist
  *                 list[map[pN.coord].owner].area --
@@ -116,7 +168,13 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
  * Fin
  */
 
-fn claim_cell(sources_list: &mut HashMap<(i32, i32), Source>, map: &mut HashMap<(i32, i32), Point>, heap: &mut Vec<Point>, p_start: Point, p_end: Point) {
+fn claim_cell(
+    sources_list: &mut HashMap<(i32, i32), Source>,
+    map: &mut HashMap<(i32, i32), Point>,
+    heap: &mut Vec<Point>,
+    p_start: Point,
+    p_end: Point,
+) {
     if !is_infinite(p_start.coord, p_end.coord, sources_list) {
         let (coord, point) = match map.get_mut(&p_end.coord) {
             Some(p_claim) => {
@@ -131,11 +189,21 @@ fn claim_cell(sources_list: &mut HashMap<(i32, i32), Source>, map: &mut HashMap<
                     }
                     heap.insert(0, p_end);
                     (p_end.coord, p_end)
-                } else if p_end.dist == p_claim.dist && !p_claim.owner.is_none() && p_claim.owner.unwrap() != p_end.owner.unwrap() {
+                } else if p_end.dist == p_claim.dist
+                    && !p_claim.owner.is_none()
+                    && p_claim.owner.unwrap() != p_end.owner.unwrap()
+                {
                     if let Some(source) = sources_list.get_mut(&p_claim.owner.unwrap()) {
                         source.area -= 1;
                     }
-                    (p_end.coord, Point{coord: p_end.coord, dist: p_end.dist, owner: None})
+                    (
+                        p_end.coord,
+                        Point {
+                            coord: p_end.coord,
+                            dist: p_end.dist,
+                            owner: None,
+                        },
+                    )
                 } else {
                     (p_claim.coord, *p_claim)
                 }
@@ -173,7 +241,11 @@ fn claim_cell(sources_list: &mut HashMap<(i32, i32), Source>, map: &mut HashMap<
  *     retourne not(infinity)
  * Fin
  */
-fn is_infinite(p_start: (i32, i32), p_end: (i32, i32), sources: &HashMap<(i32, i32), Source>) -> bool {
+fn is_infinite(
+    p_start: (i32, i32),
+    p_end: (i32, i32),
+    sources: &HashMap<(i32, i32), Source>,
+) -> bool {
     sources.keys().all(|&p_source| {
         let old_dist = (p_start.0 - p_source.0).abs() + (p_start.1 - p_source.1).abs();
         let new_dist = (p_end.0 - p_source.0).abs() + (p_end.1 - p_source.1).abs();
@@ -204,38 +276,26 @@ const MAX_MANHATTAN_DIST: i32 = 10000;
 pub fn second_star() -> Result<(), Box<Error + 'static>> {
     let input = fs::read_to_string(Path::new("./data/day6.txt"))?;
     let reg = Regex::new(r"(?P<x>\d+), (?P<y>\d+)").unwrap();
-    
+
     let mut sources = Vec::<(i32, i32)>::new();
 
     let mut area = 0;
-    let (mut min_x, mut min_y, mut max_x, mut max_y) = (0, 0, MAX_MANHATTAN_DIST, MAX_MANHATTAN_DIST);
+    let (mut min_x, mut min_y, mut max_x, mut max_y) =
+        (0, 0, MAX_MANHATTAN_DIST, MAX_MANHATTAN_DIST);
 
     for capture in reg.captures_iter(&input) {
-        let (x, y) = (capture.get(1).unwrap().as_str().parse::<i32>().unwrap(), capture.get(2).unwrap().as_str().parse::<i32>().unwrap());
+        let (x, y) = (
+            capture.get(1).unwrap().as_str().parse::<i32>().unwrap(),
+            capture.get(2).unwrap().as_str().parse::<i32>().unwrap(),
+        );
         sources.push((x, y));
-        min_y = if min_y > y {
-            y
-        } else {
-            min_y
-        };
+        min_y = if min_y > y { y } else { min_y };
 
-        min_x = if min_x > x {
-            x
-        } else {
-            min_x
-        };
+        min_x = if min_x > x { x } else { min_x };
 
-        max_y = if max_y < y {
-            y
-        } else {
-            max_y
-        };
+        max_y = if max_y < y { y } else { max_y };
 
-        max_x = if max_x < x {
-            y
-        } else {
-            max_x
-        };
+        max_x = if max_x < x { y } else { max_x };
     }
 
     for x in min_x..max_x {

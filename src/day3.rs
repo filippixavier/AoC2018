@@ -1,17 +1,19 @@
 extern crate regex;
 
+use std::collections::HashSet;
+use std::error::Error;
 use std::fs;
 use std::path::Path;
-use std::error::Error;
-use std::collections::HashSet;
 
 use self::regex::Regex;
 
-pub fn first_star() -> Result<(), Box<Error + 'static>>{
+pub fn first_star() -> Result<(), Box<Error + 'static>> {
     let input = fs::read_to_string(Path::new("./data/day3.txt"))?;
     // The starting r negate the need to escape special char in a string
-    let re = Regex::new(r"(?P<id>\d+) @ (?P<left>\d+),(?P<top>\d+): (?P<width>\d+)x(?P<height>\d+)").unwrap();
-    let mut fabric: Vec<Vec<i32>> = vec![vec![0;1000];1000];
+    let re =
+        Regex::new(r"(?P<id>\d+) @ (?P<left>\d+),(?P<top>\d+): (?P<width>\d+)x(?P<height>\d+)")
+            .unwrap();
+    let mut fabric: Vec<Vec<i32>> = vec![vec![0; 1000]; 1000];
     let mut answer = 0;
     // The iterator act as a defacto g flag
     for values in re.captures_iter(&input) {
@@ -35,10 +37,12 @@ pub fn first_star() -> Result<(), Box<Error + 'static>>{
 }
 
 // Could most probably do both star in on code, and/or use HashMap/HashSet more creatively
-pub fn second_star() -> Result<(), Box<Error + 'static>>{
+pub fn second_star() -> Result<(), Box<Error + 'static>> {
     let input = fs::read_to_string(Path::new("./data/day3.txt"))?;
-    let re = Regex::new(r"(?P<id>\d+) @ (?P<left>\d+),(?P<top>\d+): (?P<width>\d+)x(?P<height>\d+)").unwrap();
-    let mut fabric: Vec<Vec<i32>> = vec![vec![0;1000];1000];
+    let re =
+        Regex::new(r"(?P<id>\d+) @ (?P<left>\d+),(?P<top>\d+): (?P<width>\d+)x(?P<height>\d+)")
+            .unwrap();
+    let mut fabric: Vec<Vec<i32>> = vec![vec![0; 1000]; 1000];
     let mut answer = HashSet::new();
     for values in re.captures_iter(&input) {
         let mut overlap = false;

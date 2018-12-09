@@ -8,8 +8,11 @@ use std::collections::HashMap;
 
 use self::regex::Regex;
 
-
-fn prepare_inputs() -> (HashMap<String, Vec<String>>, HashMap<String, Vec<String>>, Vec<String>){
+fn prepare_inputs() -> (
+    HashMap<String, Vec<String>>,
+    HashMap<String, Vec<String>>,
+    Vec<String>,
+) {
     let input = fs::read_to_string(Path::new("./data/day7.txt")).unwrap();
     let reg = Regex::new(r"Step (\w) .* step (\w)").unwrap();
 
@@ -23,7 +26,7 @@ fn prepare_inputs() -> (HashMap<String, Vec<String>>, HashMap<String, Vec<String
                 childs.push(child.to_string());
             }
         } else {
-            parent_to_childs.insert(parent.to_string(), vec!(child.to_string()));
+            parent_to_childs.insert(parent.to_string(), vec![child.to_string()]);
         }
 
         if !parent_to_childs.contains_key(&child) {
@@ -35,7 +38,7 @@ fn prepare_inputs() -> (HashMap<String, Vec<String>>, HashMap<String, Vec<String
                 parents.push(parent.to_string());
             }
         } else {
-            child_to_parents.insert(child.to_string(), vec!(parent.to_string()));
+            child_to_parents.insert(child.to_string(), vec![parent.to_string()]);
         }
 
         if !child_to_parents.contains_key(&parent) {
@@ -80,14 +83,14 @@ static MAX_WORKER: usize = 6;
 #[derive(Debug)]
 struct Worker {
     countdown: i32,
-    id: String
+    id: String,
 }
 
 pub fn second_star() -> Result<(), Box<Error + 'static>> {
     const MIN_DURATION: i32 = 60;
-    
+
     let alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".to_string();
-    
+
     let mut answer = String::new();
     let mut id_to_duration = HashMap::<String, i32>::new();
     let mut count = 1;
@@ -133,10 +136,10 @@ pub fn second_star() -> Result<(), Box<Error + 'static>> {
         while !nodes_to_check.is_empty() && workers.len() < MAX_WORKER {
             let id = nodes_to_check.pop().unwrap();
             let countdown = id_to_duration.get(&id).unwrap() + MIN_DURATION;
-            workers.push(Worker{countdown, id});
+            workers.push(Worker { countdown, id });
         }
         count += 1;
-    } 
+    }
 
     println!("Order: {}, time: {}", answer, count);
     Ok(())

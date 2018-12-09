@@ -17,7 +17,6 @@ mod day7;
 #[cfg(feature = "day8")]
 mod day8;
 
-
 #[cfg(all(feature = "day1", not(feature = "nday")))]
 use day1::*;
 #[cfg(feature = "day2")]
@@ -35,14 +34,21 @@ use day7::*;
 #[cfg(feature = "day8")]
 use day8::*;
 
-
 fn main() {
     match first_star() {
-        Err(x) => { println!("Error: {:?}", x); }
-        _ => { println!("First Star: Succeed!"); }
+        Err(x) => {
+            println!("Error: {:?}", x);
+        }
+        _ => {
+            println!("First Star: Succeed!");
+        }
     }
     match second_star() {
-        Err(x) => { println!("Error {:?}", x); }
-        _ => { println!("Second Star: Succeed!"); }
+        Err(x) => {
+            println!("Error {:?}", x);
+        }
+        _ => {
+            println!("Second Star: Succeed!");
+        }
     }
 }

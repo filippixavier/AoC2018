@@ -1,7 +1,7 @@
+use std::collections::HashMap;
 use std::error::Error;
 use std::fs;
 use std::path::Path;
-use std::collections::HashMap;
 
 pub fn first_star() -> Result<(), Box<Error + 'static>> {
     // Need to put the file opening in another variable else we would get a lifetime error
@@ -18,12 +18,12 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
         }
         // Because of the borrow checker, values return a reference to the hashmap values and the filter function give a reference to the iterator value to the closure, meaning we have a ref to a ref
         // Also, I know I could probably write cleaner code, still getting my hand on basics through.
-        double += if counter_hash.values().filter( |&x| *x == 2).count() > 0 {
+        double += if counter_hash.values().filter(|&x| *x == 2).count() > 0 {
             1
         } else {
             0
         };
-        triple += if counter_hash.values().filter( |&x| *x == 3).count() > 0 {
+        triple += if counter_hash.values().filter(|&x| *x == 3).count() > 0 {
             1
         } else {
             0
@@ -45,13 +45,19 @@ pub fn second_star() -> Result<(), Box<Error + 'static>> {
         let first_code: Vec<_> = input[i].chars().collect();
         for j in i + 1..input.len() {
             let mut count = 0;
-            let answer = input[j].chars().filter(|&x| {
-                let cmp = first_code[count] == x;
-                count += 1;
-                cmp
-            }).collect::<String>();
+            let answer = input[j]
+                .chars()
+                .filter(|&x| {
+                    let cmp = first_code[count] == x;
+                    count += 1;
+                    cmp
+                })
+                .collect::<String>();
             if first_code.len() - answer.len() == 1 {
-                println!("Id is: {}\n original are:\n{}\n{}", answer, input[i], input[j]);
+                println!(
+                    "Id is: {}\n original are:\n{}\n{}",
+                    answer, input[i], input[j]
+                );
                 break;
             }
         }
