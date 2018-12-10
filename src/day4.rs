@@ -81,7 +81,8 @@ fn compare(a: &Captures, b: &Captures) -> Ordering {
         a.get(4).unwrap().as_str().parse::<usize>().unwrap(),
         b.get(4).unwrap().as_str().parse::<usize>().unwrap(),
     ];
-    return if month[0] > month[1]
+
+    if month[0] > month[1]
         || month[0] == month[1] && day[0] > day[1]
         || month[0] == month[1] && day[0] == day[1] && hour[0] > hour[1]
         || month[0] == month[1] && day[0] == day[1] && hour[0] == hour[1] && minute[0] > minute[1]
@@ -89,7 +90,7 @@ fn compare(a: &Captures, b: &Captures) -> Ordering {
         Ordering::Greater
     } else {
         Ordering::Less
-    };
+    }
 }
 
 fn fill_timeline(start: usize, end: usize, id: &str, time_table: &mut HashMap<String, [i32; 61]>) {
@@ -127,34 +128,34 @@ fn sleepiest_guard(time_table: &TimeTable) -> usize {
     max = 0;
     let mut hour = 0;
 
-    for i in 0..60 {
-        max = if max < sleepy_guard[i] {
+    for (i, guard) in sleepy_guard.iter().enumerate().take(60) {
+        max = if max < *guard {
             hour = i;
-            sleepy_guard[i]
+            *guard
         } else {
-            max
+            *guard
         }
     }
+
     hour * id.parse::<usize>().unwrap()
 }
 
 fn sleepliest_minute(time_table: &TimeTable) -> usize {
     let mut id = "0";
-    let mut max_sleep_per_minute = 0;
+    let mut max_sleep_per_minute: i32 = 0;
     let mut sleepy_minute = 0;
 
-    for (key, value) in time_table.iter() {
-        for i in 0..60 {
-            max_sleep_per_minute = if value[i] > max_sleep_per_minute {
+    for (key, sleep_times) in time_table.iter() {
+        for (minute, sleep_time) in sleep_times.iter().enumerate().take(60) {
+            max_sleep_per_minute = if *sleep_time > max_sleep_per_minute {
                 id = key;
-                sleepy_minute = i;
-                value[i]
+                sleepy_minute = minute;
+                *sleep_time
             } else {
                 max_sleep_per_minute
             }
         }
     }
-    // 30343 too low
 
     sleepy_minute * id.parse::<usize>().unwrap()
 }
