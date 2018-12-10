@@ -4,13 +4,10 @@ use std::path::Path;
 
 fn prepare_input() -> Vec<usize> {
     let file = fs::read_to_string(Path::new("./data/day8.txt")).unwrap();
-    let input = file
-        .trim()
+    file.trim()
         .split(' ')
         .map(|value| value.parse::<usize>().unwrap())
-        .collect();
-
-    input
+        .collect()
 }
 
 pub fn first_star() -> Result<(), Box<Error + 'static>> {
@@ -20,7 +17,7 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
     Ok(())
 }
 
-fn deep_first_meta(array: &Vec<usize>, start: usize) -> (usize, usize) {
+fn deep_first_meta(array: &[usize], start: usize) -> (usize, usize) {
     let meta_num = array[start + 1];
     let mut node_num = array[start];
     let mut sub_start = start + 2;
@@ -33,9 +30,10 @@ fn deep_first_meta(array: &Vec<usize>, start: usize) -> (usize, usize) {
         node_num -= 1;
     }
 
-    for value in sub_start..sub_start + meta_num {
-        meta += array[value];
+    for value in array.iter().skip(sub_start).take(meta_num) {
+        meta += value;
     }
+
     (meta, sub_start + meta_num)
 }
 
@@ -46,7 +44,7 @@ pub fn second_star() -> Result<(), Box<Error + 'static>> {
     Ok(())
 }
 
-fn deep_first_offset(array: &Vec<usize>, start: usize) -> (usize, usize) {
+fn deep_first_offset(array: &[usize], start: usize) -> (usize, usize) {
     let meta_num = array[start + 1];
     let mut node_num = array[start];
     let mut sub_start = start + 2;
@@ -61,14 +59,12 @@ fn deep_first_offset(array: &Vec<usize>, start: usize) -> (usize, usize) {
             node_num -= 1;
         }
 
-        for value in sub_start..sub_start + meta_num {
-            if let Some(sub_meta) = child_values.get(array[value] - 1) {
-                meta += sub_meta
-            }
+        for value in array.iter().skip(sub_start).take(meta_num) {
+            meta += child_values.get(value - 1).unwrap_or(&0);
         }
     } else {
-        for value in sub_start..sub_start + meta_num {
-            meta += array[value];
+        for value in array.iter().skip(sub_start).take(meta_num) {
+            meta += value;
         }
     }
 
