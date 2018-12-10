@@ -40,5 +40,37 @@ fn deep_first_meta(array: &Vec<usize>, start: usize) -> (usize, usize) {
 }
 
 pub fn second_star() -> Result<(), Box<Error + 'static>> {
+    let input = prepare_input();
+    let (answer, _) = deep_first_offset(&input, 0);
+    println!("Sum is: {}", answer);
     Ok(())
+}
+
+fn deep_first_offset(array: &Vec<usize>, start: usize) -> (usize, usize) {
+    let meta_num = array[start + 1];
+    let mut node_num = array[start];
+    let mut sub_start = start + 2;
+    let mut meta = 0;
+
+    if node_num > 0 {
+        let mut child_values = Vec::<usize>::new();
+        while node_num > 0 {
+            let (inter_meta, inter_start) = deep_first_offset(array, sub_start);
+            sub_start = inter_start;
+            child_values.push(inter_meta);
+            node_num -= 1;
+        }
+
+        for value in sub_start..sub_start + meta_num {
+            if let Some(sub_meta) = child_values.get(array[value] - 1) {
+                meta += sub_meta
+            }
+        }
+    } else {
+        for value in sub_start..sub_start + meta_num {
+            meta += array[value];
+        }
+    }
+
+    (meta, sub_start + meta_num)
 }
