@@ -8,11 +8,13 @@ use std::collections::HashMap;
 
 use self::regex::Regex;
 
-fn prepare_inputs() -> (
+type Output = (
     HashMap<String, Vec<String>>,
     HashMap<String, Vec<String>>,
     Vec<String>,
-) {
+);
+
+fn prepare_inputs() -> Output {
     let input = fs::read_to_string(Path::new("./data/day7.txt")).unwrap();
     let reg = Regex::new(r"Step (\w) .* step (\w)").unwrap();
 
@@ -63,7 +65,7 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
         nodes_to_check.sort_by(|a, b| b.cmp(a));
         let node_id = nodes_to_check.pop().unwrap();
         answer.push_str(&node_id);
-        for child_id in parent_to_childs.get(&node_id).unwrap() {
+        for child_id in &parent_to_childs[&node_id] {
             if let Some(parents) = child_to_parents.get_mut(child_id) {
                 let posi = parents.iter().position(|x| *x == node_id).unwrap();
                 parents.remove(posi);
@@ -107,20 +109,18 @@ pub fn second_star() -> Result<(), Box<Error + 'static>> {
 
     while !(nodes_to_check.is_empty() && workers.is_empty()) {
         let mut workers_done = Vec::<usize>::new();
-        let mut index: usize = 0;
-        for worker in workers.iter_mut() {
+        for (index, worker) in workers.iter_mut().enumerate() {
             worker.countdown -= 1;
             if worker.countdown == 0 {
                 workers_done.push(index);
             }
-            index += 1;
         }
 
         workers_done.reverse();
 
         for posi in workers_done {
             let worker = workers.remove(posi);
-            for child_id in parent_to_childs.get(&worker.id).unwrap() {
+            for child_id in &parent_to_childs[&worker.id] {
                 if let Some(parents) = child_to_parents.get_mut(child_id) {
                     let posi = parents.iter().position(|x| *x == worker.id).unwrap();
                     parents.remove(posi);
@@ -135,7 +135,7 @@ pub fn second_star() -> Result<(), Box<Error + 'static>> {
         nodes_to_check.sort_by(|a, b| b.cmp(a));
         while !nodes_to_check.is_empty() && workers.len() < MAX_WORKER {
             let id = nodes_to_check.pop().unwrap();
-            let countdown = id_to_duration.get(&id).unwrap() + MIN_DURATION;
+            let countdown = id_to_duration[&id] + MIN_DURATION;
             workers.push(Worker { countdown, id });
         }
         count += 1;
