@@ -19,12 +19,14 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
     for values in re.captures_iter(&input) {
         let left = values["left"].parse::<usize>().unwrap();
         let width = values["width"].parse::<usize>().unwrap();
-        for i in left..left + width {
+
+        for line in fabric.iter_mut().skip(left).take(width) {
             let top = values["top"].parse::<usize>().unwrap();
             let height = values["height"].parse::<usize>().unwrap();
-            for j in top..top + height {
-                fabric[i][j] += 1;
-                if fabric[i][j] == 2 {
+
+            for column in line.iter_mut().skip(top).take(height) {
+                *column += 1;
+                if *column == 2 {
                     answer += 1;
                 }
             }
@@ -49,17 +51,20 @@ pub fn second_star() -> Result<(), Box<Error + 'static>> {
         let left = values["left"].parse::<usize>().unwrap();
         let width = values["width"].parse::<usize>().unwrap();
         let id = values["id"].parse::<i32>().unwrap();
-        for i in left..left + width {
+
+        for line in fabric.iter_mut().skip(left).take(width) {
             let top = values["top"].parse::<usize>().unwrap();
             let height = values["height"].parse::<usize>().unwrap();
-            for j in top..top + height {
-                if fabric[i][j] != 0 {
+
+            for column in line.iter_mut().skip(top).take(height) {
+                if *column != 0 {
                     overlap = true;
-                    answer.remove(&fabric[i][j]);
+                    answer.remove(column);
                 }
-                fabric[i][j] = id;
+                *column = id;
             }
         }
+
         if !overlap {
             answer.insert(id);
         }
