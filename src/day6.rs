@@ -74,7 +74,7 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
         heap.insert(0, source_point);
     }
 
-    while heap.len() > 0 {
+    while !heap.is_empty() {
         let p_start = heap.pop().unwrap();
         claim_cell(
             &mut sources_list,
@@ -190,7 +190,7 @@ fn claim_cell(
                     heap.insert(0, p_end);
                     (p_end.coord, p_end)
                 } else if p_end.dist == p_claim.dist
-                    && !p_claim.owner.is_none()
+                    && p_claim.owner.is_some()
                     && p_claim.owner.unwrap() != p_end.owner.unwrap()
                 {
                     if let Some(source) = sources_list.get_mut(&p_claim.owner.unwrap()) {
@@ -217,10 +217,8 @@ fn claim_cell(
             }
         };
         map.insert(coord, point);
-    } else {
-        if let Some(source) = sources_list.get_mut(&p_start.owner.unwrap()) {
-            source.infinite = true;
-        }
+    } else if let Some(source) = sources_list.get_mut(&p_start.owner.unwrap()) {
+        source.infinite = true;
     }
 }
 
@@ -328,7 +326,7 @@ pub fn second_star() -> Result<(), Box<Error + 'static>> {
  * Fin
  */
 
-fn valid_cell(pt: (i32, i32), sources: &Vec<(i32, i32)>) -> bool {
+fn valid_cell(pt: (i32, i32), sources: &[(i32, i32)]) -> bool {
     let mut total = 0;
     for source in sources {
         total += (pt.0 - source.0).abs() + (pt.1 - source.1).abs();
@@ -336,5 +334,5 @@ fn valid_cell(pt: (i32, i32), sources: &Vec<(i32, i32)>) -> bool {
             return false;
         }
     }
-    return true;
+    true
 }
