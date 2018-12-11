@@ -18,6 +18,8 @@ mod day7;
 mod day8;
 #[cfg(feature = "day9")]
 mod day9;
+#[cfg(feature = "day10")]
+mod day10;
 
 #[cfg(all(feature = "day1", not(feature = "nday")))]
 use day1::*;
@@ -37,6 +39,8 @@ use day7::*;
 use day8::*;
 #[cfg(feature = "day9")]
 use day9::*;
+#[cfg(feature = "day10")]
+use day10::*;
 
 fn main() {
     match first_star() {
