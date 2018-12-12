@@ -5,6 +5,7 @@ authors = ["Xavier Filippi <gueltir@gmail.com>"]
 
 [dependencies]
 regex = "1.1.0"
+sdl2 = "0.32"
 
 [features]
 default = ["day1"]
