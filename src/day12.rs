@@ -41,7 +41,7 @@ fn prepare_binary_input() -> (VecDeque<i32>, Vec<i32>) {
     } else {
         VecDeque::<i32>::new()
     };
-    let mut transformation = vec!(0;0b11111);
+    let mut transformation = vec!(0;0b100000);
     let transformation_reg = Regex::new(r"((?:\.|#){5}) => (\.|#)").unwrap();
 
     for capture in transformation_reg.captures_iter(&input) {
@@ -84,13 +84,15 @@ fn binary_pots_value(steps: u64) -> i32 {
         }
         
         let mut temp = state.clone();
-        for (index, val) in state.iter().enumerate() {
-            key = (key << 1 + val) & 0b11111;
-            temp[index] = transformation[key];
+        for index in 0..state.len() + 2 {
+            key = ((key << 1) + state.get(index).unwrap_or(&0)) & 0b11111;
+            if index as i32 - 2 >= 0 {
+                temp[index - 2] = transformation[key as usize];
+            }
         }
         state = temp;
     }
-    println!("State after {} steps:\n{:?}", steps, state);
+    println!("State after {} steps:\n{:?}", steps, state.iter().map(|x| {return if *x == 1 {'#'} else {'.'}}).collect::<String>());
     state.iter().enumerate().fold(0, |acc, (index, value)| {
         if *value == 1 {
             return acc + index as i32 + start;
@@ -126,7 +128,6 @@ fn pots_values(steps: u64) -> i32 {
             key.push(*cloned_state.get(i).unwrap());
             key.push(*cloned_state.get(i+1).unwrap_or(&'.'));
             key.push(*cloned_state.get(i+2).unwrap_or(&'.'));
-
             new_state.push(*transformation.get(&key).unwrap_or(&'.'));
         }
         state = new_state;
@@ -148,7 +149,7 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
 }
 
 pub fn second_star() -> Result<(), Box<Error + 'static>> {
-    let answer = binary_pots_value(20);
+    let answer = binary_pots_value(50000000000);
     println!("Pots values: {}", answer);
     Ok(())
 }
