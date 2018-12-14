@@ -1,13 +1,15 @@
 // Note: look into build.rs to just rewrite mod day1 into mod dayx without all the cfg
 
-#[cfg(all(feature = "day1", not(feature = "nday")))]
-mod day1;
 #[cfg(feature = "day10")]
 mod day10;
 #[cfg(feature = "day11")]
 mod day11;
+#[cfg(all(feature = "day1", not(feature = "nday")))]
+mod day1;
 #[cfg(feature = "day12")]
 mod day12;
+#[cfg(feature = "day13")]
+mod day13;
 #[cfg(feature = "day2")]
 mod day2;
 #[cfg(feature = "day3")]
@@ -25,14 +27,16 @@ mod day8;
 #[cfg(feature = "day9")]
 mod day9;
 
-#[cfg(all(feature = "day1", not(feature = "nday")))]
-use day1::*;
 #[cfg(feature = "day10")]
 use day10::*;
 #[cfg(feature = "day11")]
 use day11::*;
+#[cfg(all(feature = "day1", not(feature = "nday")))]
+use day1::*;
 #[cfg(feature = "day12")]
 use day12::*;
+#[cfg(feature = "day13")]
+use day13::*;
 #[cfg(feature = "day2")]
 use day2::*;
 #[cfg(feature = "day3")]
