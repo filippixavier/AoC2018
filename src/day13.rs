@@ -2,55 +2,215 @@ use std::error::Error;
 use std::fs;
 use std::path::Path;
 
-#[derive(Debug)]
-struct Cart {
-    current_dir: (i32, i32),
-    next_rotation: Rotate
-}
+use std::collections::HashMap;
 
 #[derive(Debug)]
-enum Rotate {
+enum Turn {
     Left,
+    Right,
     Straight,
-    Right
 }
 
-impl Iterator for Cart {
-    type Item = (i32, i32);
-    fn next(&mut self) -> Option<Self::Item> {
-        Some((1, 1))
-    }
+#[derive(Debug)]
+enum Orientation {
+    Up,
+    Left,
+    Down,
+    Right,
+}
+
+struct Cart {
+    position: (usize, usize),
+    direction: (i32, i32),
+    cross_turn: Turn,
+    orientation: Orientation,
+    tile: char,
 }
 
 impl Cart {
-    fn new(orientation: char) -> Self {
-        Cart{current_dir: (0, 1), next_rotation: Rotate::Left}
+    fn turn_left(&mut self) {
+        use day13::Orientation::*;
+        self.direction = match self.direction {
+            (0, 1) => (1, 0),
+            (1, 0) => (0, -1),
+            (0, -1) => (-1, 0),
+            (-1, 0) => (0, 1),
+            _ => unreachable!(),
+        };
+
+        self.orientation = match self.orientation {
+            Up => Left,
+            Left => Down,
+            Down => Right,
+            Right => Up,
+        };
+    }
+
+    fn turn_right(&mut self) {
+        use day13::Orientation::*;
+        self.direction = match self.direction {
+            (0, 1) => (-1, 0),
+            (-1, 0) => (0, -1),
+            (0, -1) => (1, 0),
+            (1, 0) => (0, 1),
+            _ => unreachable!(),
+        };
+        self.orientation = match self.orientation {
+            Up => Right,
+            Right => Down,
+            Down => Left,
+            Left => Up,
+        };
+    }
+
+    fn handle_slash(&mut self, slash: char) {
+        use day13::Orientation::*;
+        match (&self.orientation, slash) {
+            (Up, '/') => self.turn_right(),
+            (Up, '\\') => self.turn_left(),
+            (Down, '\\') => self.turn_left(),
+            (Down, '/') => self.turn_right(),
+            (Left, '/') => self.turn_left(),
+            (Left, '\\') => self.turn_right(),
+            (Right, '/') => self.turn_left(),
+            (Right, '\\') => self.turn_right(),
+            _ => unreachable!(),
+        };
+    }
+
+    fn handle_crossroad(&mut self) {
+        use day13::Turn::*;
+        self.cross_turn = match self.cross_turn {
+            Left => {
+                self.turn_left();
+                Straight
+            }
+            Straight => Right,
+            Right => {
+                self.turn_right();
+                Left
+            }
+        };
     }
 }
 
-fn get_map() -> Vec<Vec<i32>> {
-    let input = fs::read_to_string(Path::new("./data/day12.txt")).unwrap();
-    let mut cart_id = 6;
-    input.split('\n').map(|line| {
-        line.chars().map(|chara| {
-            match chara {
-                '|' => 1,
-                '-' => 2,
-                '/' => 3,
-                '\\'=> 4,
-                '+' => 5,
-                '^' | 'v' | '<' | '>' => {
-                    cart_id += 1;
-                    cart_id - 1
-                },
-                _ => 0
+impl Iterator for Cart {
+    type Item = (usize, usize);
+    fn next(&mut self) -> Option<(usize, usize)> {
+        self.position.0 = (self.position.0 as i32 + self.direction.0) as usize;
+        self.position.1 = (self.position.1 as i32 + self.direction.1) as usize;
+        Some(self.position)
+    }
+}
+
+fn get_map() -> (Vec<Cart>, HashMap<(usize, usize), char>) {
+    let input = fs::read_to_string(Path::new("./data/day13.txt")).unwrap();
+    let mut carts = Vec::<Cart>::new();
+    let mut rails = HashMap::<(usize, usize), char>::new();
+
+    let lines = input.trim().split('\n');
+    for (line_number, line_content) in lines.enumerate() {
+        for (char_index, char_value) in line_content.chars().enumerate() {
+            match char_value {
+                '+' => {
+                    rails.insert((char_index, line_number), '+');
+                }
+                '-' => {
+                    rails.insert((char_index, line_number), '-');
+                }
+                '|' => {
+                    rails.insert((char_index, line_number), '|');
+                }
+                '/' => {
+                    rails.insert((char_index, line_number), '/');
+                }
+                '\\' => {
+                    rails.insert((char_index, line_number), '\\');
+                }
+                '<' => {
+                    rails.insert((char_index, line_number), '*');
+                    carts.push(Cart {
+                        position: (char_index, line_number),
+                        direction: (-1, 0),
+                        cross_turn: Turn::Left,
+                        orientation: Orientation::Left,
+                        tile: '-',
+                    });
+                }
+                '^' => {
+                    rails.insert((char_index, line_number), '*');
+                    carts.push(Cart {
+                        position: (char_index, line_number),
+                        direction: (0, -1),
+                        cross_turn: Turn::Left,
+                        orientation: Orientation::Up,
+                        tile: '|',
+                    });
+                }
+                '>' => {
+                    rails.insert((char_index, line_number), '*');
+                    carts.push(Cart {
+                        position: (char_index, line_number),
+                        direction: (1, 0),
+                        cross_turn: Turn::Left,
+                        orientation: Orientation::Right,
+                        tile: '-',
+                    });
+                }
+                'v' => {
+                    rails.insert((char_index, line_number), '*');
+                    carts.push(Cart {
+                        position: (char_index, line_number),
+                        direction: (0, 1),
+                        cross_turn: Turn::Left,
+                        orientation: Orientation::Down,
+                        tile: '|',
+                    });
+                }
+                _ => {}
             }
-        }).collect::<Vec<_>>()
-    }).collect::<Vec<_>>()
+        }
+    }
+
+    (carts, rails)
 }
 
 pub fn first_star() -> Result<(), Box<Error + 'static>> {
-    get_map();
+    let (mut carts, mut rails) = get_map();
+    let crash_zone;
+
+    'collide: loop {
+        carts.sort_by(|cart_a, cart_b| {
+            if cart_a.position.1 == cart_b.position.1 {
+                return cart_a.position.0.cmp(&cart_b.position.0);
+            }
+            cart_a.position.1.cmp(&cart_b.position.1)
+        });
+        for cart in carts.iter_mut() {
+            rails.insert(cart.position, cart.tile);
+            let new_pos = cart.next().unwrap();
+            let tile = *rails.get(&new_pos).unwrap_or(&'*');
+            match tile {
+                '*' => {
+                    crash_zone = new_pos;
+                    break 'collide;
+                }
+                '+' => {
+                    cart.handle_crossroad();
+                }
+                '/' => {
+                    cart.handle_slash('/');
+                }
+                '\\' => {
+                    cart.handle_slash('\\');
+                }
+                _ => {}
+            }
+            rails.insert(cart.position, '*');
+            cart.tile = tile;
+        }
+    }
+    println!("Crash in area {}, {}", crash_zone.0, crash_zone.1);
     Ok(())
 }
 
