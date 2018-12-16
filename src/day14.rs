@@ -61,36 +61,30 @@ pub fn second_star() -> Result<(), Box<Error + 'static>> {
     let mut first_index: usize = 0;
     let mut second_index: usize = 1;
 
-    // NB: VecDeque doesn't work properly in that case: it contains two independant slice for looping effect and can't do eq! properly
-    let mut score_matching = 0;
-
+    // NB My previous VecDeque solution could have worked but I only checked egality once per loop, but we may have two pushes
+    // Also done using a match_index but it could overlook overlapping matches
     loop {
         let (first_score, second_score) = (recipes_score[first_index], recipes_score[second_index]);
         let result = first_score + second_score;
         if result >= 10 {
             recipes_score.push(result / 10);
-            if result / 10 == input[score_matching] {
-                score_matching += 1;
-                if score_matching == input.len() {
+            if recipes_score.len() > input.len() {
+                if recipes_score[(recipes_score.len() - input.len())..recipes_score.len()]
+                    == input[0..input.len()]
+                {
                     break;
                 }
-            } else if result / 10 == input[0] {
-                score_matching = 1;
-            } else {
-                score_matching = 0;
             }
+            // Note: could not work in case of inputs with overlapping elements such as 10101 as the second 101 would be discarded
         }
         recipes_score.push(result % 10);
 
-        if result % 10 == input[score_matching] {
-            score_matching += 1;
-            if score_matching == input.len() {
+        if recipes_score.len() > input.len() {
+            if recipes_score[(recipes_score.len() - input.len())..recipes_score.len()]
+                == input[0..input.len()]
+            {
                 break;
             }
-        } else if result % 10 == input[0] {
-            score_matching = 1;
-        } else {
-            score_matching = 0;
         }
 
         first_index = (first_index + first_score + 1) % recipes_score.len();
