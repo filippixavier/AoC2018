@@ -31,7 +31,7 @@ enum Clan {
     Elves,
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 enum Tile {
     Empty,
     Wall,
@@ -198,16 +198,29 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
     let (mut elves, mut goblins) = get_npcs(&map, line_size);
 
     'main: loop {
-        for (index, chara) in map.iter_mut().enumerate() {
+        // Can't iter through map since we need both to alter (so mutable borrow) it and to send it to the a* function (so another borrow within) 
+        for index in 0..map.len() {
+            let tile = map[index];
             let position = (index % line_size, index / line_size);
-            match chara {
+            let mut closest_enemy = Vec::new();
+            match tile {
                 Goblin => {
                     let mut goblin = goblins
                         .iter_mut()
-                        .find(|goblin| goblin.position == position);
+                        .find(|goblin| goblin.position == position)
+                        .unwrap();
+                    for elf in &elves {
+                        if let Some(path_to_enemy) = a_star(goblin.position, elf.position, &map, line_size) {
+                            if closest_enemy.is_empty() || closest_enemy.len() > path_to_enemy.len() {
+                                closest_enemy = path_to_enemy;
+                            }
+                        }
+                    }
                 }
                 Elf => {
-                    let mut elf = elves.iter_mut().find(|elf| elf.position == position);
+                    let mut elf = elves
+                        .iter_mut()
+                        .find(|elf| elf.position == position);
                 }
                 _ => {}
             }
