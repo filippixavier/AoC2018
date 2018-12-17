@@ -6,11 +6,11 @@ use std::path::Path;
 use std::collections::HashMap;
 use std::collections::HashSet;
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 struct Character {
     position: (usize, usize),
-    hp: usize,
-    atk: usize,
+    hp: i32,
+    atk: i32,
     clan: Clan,
 }
 
@@ -25,7 +25,7 @@ impl Character {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 enum Clan {
     Goblins,
     Elves,
@@ -121,9 +121,9 @@ fn reconstruct_path(came_from: HashMap<Position, Position>, goal: Position) -> V
 fn a_star(
     start: Position,
     goal: Position,
-    map: &Vec<Tile>,
+    map: &[Tile],
     line_size: usize,
-) -> Option<Vec<Position>> {
+) -> Option<(Vec<Position>, HashMap<Position, i32>)> {
     let mut closed_set = HashSet::<Position>::new();
     let mut open_set = HashSet::<Position>::new();
     open_set.insert(start);
@@ -153,7 +153,7 @@ fn a_star(
         }
 
         if current == goal {
-            return Some(reconstruct_path(came_from, goal));
+            return Some((reconstruct_path(came_from, goal), f_score));
         }
 
         open_set.remove(&current);
@@ -197,34 +197,118 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
     let (mut map, line_size) = get_map();
     let (mut elves, mut goblins) = get_npcs(&map, line_size);
 
+    let mut round = 0;
+    let mut surviving_team;
+
+    let neighbors = &[(0, -1), (-1, 0), (1, 0), (0, 1)];
+
     'main: loop {
         // Can't iter through map since we need both to alter (so mutable borrow) it and to send it to the a* function (so another borrow within) 
         for index in 0..map.len() {
             let tile = map[index];
             let position = (index % line_size, index / line_size);
             let mut closest_enemy = Vec::new();
+            let mut closest_enemy_position = (0, 0);
+            let mut closest_enemy_map = HashMap::new();
             match tile {
                 Goblin => {
+                    //Stop condition
+                    if elves.is_empty() {
+                        surviving_team = goblins;
+                        break 'main;
+                    }
                     let mut goblin = goblins
                         .iter_mut()
                         .find(|goblin| goblin.position == position)
                         .unwrap();
+                    /*Move*/
+                    // Look for closest elf
                     for elf in &elves {
-                        if let Some(path_to_enemy) = a_star(goblin.position, elf.position, &map, line_size) {
+                        if let Some((path_to_enemy, f_map)) = a_star(goblin.position, elf.position, &map, line_size) {
+                            if closest_enemy.len() == 1 {
+                                break;
+                            }
                             if closest_enemy.is_empty() || closest_enemy.len() > path_to_enemy.len() {
                                 closest_enemy = path_to_enemy;
+                                closest_enemy_position = elf.position;
+                                closest_enemy_map = f_map;
+                            } else if closest_enemy.len() == path_to_enemy.len() {
+                                if elf.position.1 < closest_enemy_position.1 || elf.position.1 == closest_enemy_position.1 && elf.position.0 == closest_enemy_position.0 {
+                                    closest_enemy = path_to_enemy;
+                                    closest_enemy_position = elf.position;
+                                }
+                            }
+                        }
+                    }
+                    // If elf is close enough but not in range
+                    if !closest_enemy.is_empty() {
+                        let mut next_position = (999, 999);
+                        let mut distance = 999;
+                        for n in neighbors {
+                            if goblin.position.0 as i32 + n.0 < 0 || goblin.position.1 as i32 + n.1 < 0 {
+                                continue;
+                            }
+                            let neighbor = (
+                                (n.0 + goblin.position.0 as i32) as usize,
+                                (n.1 + goblin.position.1 as i32) as usize,
+                            );
+                            if let Some(dist) = closest_enemy_map.get(&neighbor) {
+                                if dist < &distance {
+                                    distance = *dist;
+                                    next_position = neighbor;
+                                }
+                            }
+                        }
+
+                        map.insert(goblin.position.0 + goblin.position.1 * line_size, Tile::Empty);
+                        goblin.position = next_position;
+                        map.insert(goblin.position.0 + goblin.position.1 * line_size, Tile::Goblin);
+                    }
+                    //ATTACC
+                    {
+                        let mut attack_on_titanelf: Option<Character> = None;
+                        for n in neighbors {
+                            if goblin.position.0 as i32 + n.0 < 0 || goblin.position.1 as i32 + n.1 < 0 {
+                                continue;
+                            }
+                            let neighbor = (
+                                (n.0 + goblin.position.0 as i32) as usize,
+                                (n.1 + goblin.position.1 as i32) as usize,
+                            );
+                            if let Some(elf) = elves.iter().find(|elf| elf.position == neighbor) {
+                                if let Some(victim) = attack_on_titanelf {
+                                    if victim.hp < elf.hp {
+                                        attack_on_titanelf = Some(*elf);
+                                    }
+                                } else {
+                                    attack_on_titanelf = Some(*elf);
+                                }
+                            }
+                        }
+                        if let Some(mut victim) = attack_on_titanelf {
+                            victim.hp -= goblin.atk;
+                            if victim.hp <= 0 {
+                                // ELF BE DEAD x_x
                             }
                         }
                     }
                 }
                 Elf => {
+                    if goblins.is_empty() {
+                        surviving_team = elves;
+                        break 'main;
+                    }
                     let mut elf = elves
                         .iter_mut()
-                        .find(|elf| elf.position == position);
+                        .find(|elf| elf.position == position)
+                        .unwrap();
+                    //Stop condition
                 }
                 _ => {}
             }
         }
+
+        round += 1;
     }
 
     Ok(())
