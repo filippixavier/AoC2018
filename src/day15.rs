@@ -25,7 +25,7 @@ impl Character {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum Clan {
     Goblins,
     Elves,
@@ -113,7 +113,7 @@ fn reconstruct_path(came_from: HashMap<Position, Position>, goal: Position) -> V
         current_node = came_from[&current_node];
         path.push(current_node);
     }
-    path.reverse();
+    path.pop();
     path
 }
 
@@ -123,7 +123,7 @@ fn a_star(
     goal: Position,
     map: &[Tile],
     line_size: usize,
-) -> Option<(Vec<Position>, HashMap<Position, i32>)> {
+) -> Option<Vec<Position>> {
     let mut closed_set = HashSet::<Position>::new();
     let mut open_set = HashSet::<Position>::new();
     open_set.insert(start);
@@ -147,29 +147,28 @@ fn a_star(
             let (temp, _) = f_score
                 .iter()
                 .filter(|(key, _)| open_set.contains(key))
-                .min_by(|(_, val_a), (_, val_b)| val_a.cmp(val_b))
+                // Min by is not constant since it returns the first min it encounter in case of equality, and order can't be assurer in a Hashmap
+                // Less efficient, but with the wanted constrain
+                //.min_by(|v_a, v_b| v_a.cmp(v_b))
+                .fold(None, |acc, (key, val)| {
+                    if let Some((p_key, p_val)) = acc {
+                        if val < p_val {
+                            Some((key, val))
+                        } else if val == p_val && (key.1 < p_key.1
+                            || key.1 == p_key.1 && key.0 < p_key.0) {
+                            Some((key, val))
+                        } else {
+                            Some((p_key, p_val))
+                        }
+                    } else {
+                        Some((key, val))
+                    }
+                })
                 .unwrap();
             current = temp.clone();
         }
         if current == goal {
-            /*for index in 0..map.len() {
-                let posi = (index % line_size, index / line_size);
-                let value = if let Some(val) = g_score.get(&posi) {
-                    if val >= &10 {
-                        format!("[{}]", val)
-                    } else {
-                        format!("[_{}]", val)
-                    }
-                } else {
-                    "[##]".to_string()
-                };
-                if index >= line_size - 1 && index % line_size == line_size - 1  {
-                    print!("{}\n", value);
-                } else {
-                    print!("{}", value);
-                }
-            }*/
-            return Some((reconstruct_path(came_from, goal), g_score));
+            return Some(reconstruct_path(came_from, goal));
         }
 
         open_set.remove(&current);
@@ -205,21 +204,18 @@ fn a_star(
 }
 
 fn move_attack(attacker: &mut Character, enemies: &mut Vec<Character>, map: &mut Vec<Tile>, line_size: usize) {
-    let neighbors = &[(0, -1), (-1, 0), (1, 0), (0, 1)];
     let mut closest_enemy = Vec::new();
     let mut closest_enemy_position = (0, 0);
-    let mut closest_enemy_map = HashMap::new();
     /*Move*/
     // Look for closest enemy
     for enemy in enemies.iter() {
-        if let Some((path_to_enemy, f_map)) = a_star(attacker.position, enemy.position, &map, line_size) {
-            if closest_enemy.len() == 2 {
+        if let Some(path_to_enemy) = a_star(attacker.position, enemy.position, &map, line_size) {
+            if closest_enemy.len() == 1 {
                 break;
             }
             if closest_enemy.is_empty() || closest_enemy.len() > path_to_enemy.len() {
                 closest_enemy = path_to_enemy;
                 closest_enemy_position = enemy.position;
-                closest_enemy_map = f_map;
             } else if closest_enemy.len() == path_to_enemy.len() {
                 if enemy.position.1 < closest_enemy_position.1 || enemy.position.1 == closest_enemy_position.1 && enemy.position.0 == closest_enemy_position.0 {
                     closest_enemy = path_to_enemy;
@@ -229,21 +225,8 @@ fn move_attack(attacker: &mut Character, enemies: &mut Vec<Character>, map: &mut
         }
     }
     // If enemy is close enough but not in range
-    if !closest_enemy.is_empty() && closest_enemy.len() > 2 {
-        let mut next_position = (999, 999);
-        let mut distance = 999;
-        for n in neighbors {
-            let neighbor = (
-                (n.0 + attacker.position.0 as i32) as usize,
-                (n.1 + attacker.position.1 as i32) as usize,
-            );
-            if let Some(dist) = closest_enemy_map.get(&neighbor) {
-                if dist < &distance {
-                    distance = *dist;
-                    next_position = neighbor;
-                }
-            }
-        }
+    if !closest_enemy.is_empty() && closest_enemy.len() > 1 {
+        let next_position = closest_enemy.pop().unwrap();
         map[attacker.position.0 + attacker.position.1 * line_size] = Tile::Empty;
         attacker.position = next_position;
         map[attacker.position.0 + attacker.position.1 * line_size] = match attacker.clan {
@@ -335,13 +318,12 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
         }
         round += 1;
 
-        if round == 1 {
+
+        if round == 50 {
             surviving_team = elves;
             break;
         }
     }
-
-    println!("Surviving team: {}, on {} rounds", surviving_team.len(), round);
 
     for (index, t) in map.iter().enumerate() {
         let tile = match t {
@@ -356,6 +338,7 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
             print!("{}", tile);
         }
     }
+    println!("Surviving team: {}, on {} rounds", surviving_team.len(), round);
     Ok(())
 }
 
