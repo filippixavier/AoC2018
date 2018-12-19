@@ -380,30 +380,81 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
         round += 1
     }
 
-    /*for (index, t) in map.iter().enumerate() {
-        let tile = match t {
-            Tile::Empty => '.',
-            Tile::Goblin => 'G',
-            Tile::Elf => 'E',
-            Tile::Wall => '#'
-        };
-        if index >= line_size - 1 && index % line_size == line_size - 1  {
-            print!("{}\n", tile);
-        } else {
-            print!("{}", tile);
-        }
-    }*/
     let total_hp = surviving_team.iter().fold(0, |acc, survivor| {
-        //println!("{}", survivor.hp);
         acc + survivor.hp
     });
     println!("Score: {} in {} rounds", total_hp * round, round);
     Ok(())
-
-    // 241142 too high (97)
-    // 199290 too high (78)
 }
 
 pub fn second_star() -> Result<(), Box<Error + 'static>> {
+       use self::Tile::*;
+
+    let (map, line_size) = get_map();
+    let (elves, goblins) = get_npcs(&map, line_size);
+
+    let mut round;
+    let mut base_elf_power = 14;
+    let surviving_team;
+
+    'main: loop {
+        base_elf_power += 1;
+        let (mut elves_sub, mut goblins_sub, mut map_sub) = (elves.clone(), goblins.clone(), map.clone());
+        for elf in elves_sub.iter_mut() {
+            elf.atk = base_elf_power;
+        }
+        round = 0;
+        'battle: loop {
+            // Can't iter through map since we need both to alter (so mutable borrow) it and to send it to the a* function (so another borrow within)
+            let mut already_moved = HashSet::new();
+            for index in 0..map_sub.len() {
+                let tile = map_sub[index];
+                let position = (index % line_size, index / line_size);
+                match tile {
+                    Goblin => {
+                        let mut goblin = goblins_sub
+                            .iter_mut()
+                            .find(|goblin| goblin.position == position)
+                            .unwrap();
+                        // Hashing the raw pointer to the object, we can't use the object itself as an hash since it mutate through the game
+                        // We can't use raw pointer either: can mutate when removing dead character, meaning false positive when character is trying to take its turn
+                        if already_moved.insert(goblin.id) {
+                            move_attack(&mut goblin, &mut elves_sub, &mut map_sub, line_size);
+                            if elves_sub.len() != elves.len() {
+                                continue 'main;
+                            }
+                        }
+                    }
+                    Elf => {
+                        //Stop condition
+                        if goblins_sub.is_empty() {
+                            if elves_sub.len() == elves.len() {
+                                surviving_team = elves_sub;
+                                break 'main;
+                            } else {
+                                continue 'main;
+                            }
+                        }
+                        let mut elf = elves_sub
+                            .iter_mut()
+                            .find(|elf| elf.position == position)
+                            .unwrap();
+                        if already_moved.insert(elf.id) {
+                            move_attack(&mut elf, &mut goblins_sub, &mut map_sub, line_size);
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            round += 1
+        }
+    }
+    
+    let total_hp = surviving_team.iter().fold(0, |acc, survivor| {
+        acc + survivor.hp
+    });
+    println!("Score: {} in {} rounds with {} atk", total_hp * round, round, base_elf_power);
+    // 67595 too high
+
     Ok(())
 }
