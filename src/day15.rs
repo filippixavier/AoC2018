@@ -12,6 +12,7 @@ struct Character {
     hp: i32,
     atk: i32,
     clan: Clan,
+    id: (usize, usize),
 }
 
 impl Character {
@@ -21,6 +22,7 @@ impl Character {
             clan,
             hp: 200,
             atk: 3,
+            id: position,
         }
     }
 }
@@ -38,8 +40,6 @@ enum Tile {
     Elf,
     Goblin,
 }
-
-type Map = Vec<Tile>;
 
 fn get_map() -> (Vec<Tile>, usize) {
     use self::Tile::*;
@@ -72,7 +72,7 @@ fn get_map() -> (Vec<Tile>, usize) {
     (map, line_size)
 }
 
-fn get_npcs(map: &Map, line_size: usize) -> (Vec<Character>, Vec<Character>) {
+fn get_npcs(map: &[Tile], line_size: usize) -> (Vec<Character>, Vec<Character>) {
     let mut elves = Vec::new();
     let mut goblins = Vec::new();
 
@@ -106,7 +106,7 @@ fn manhattan_dist(start: Position, end: Position) -> i32 {
     (start.0 as i32 - end.0 as i32).abs() + (start.1 as i32 - end.1 as i32).abs()
 }
 
-fn reconstruct_path(came_from: HashMap<Position, Position>, goal: Position) -> Vec<Position> {
+fn reconstruct_path(came_from: &HashMap<Position, Position>, goal: Position) -> Vec<Position> {
     let mut path = vec![goal];
     let mut current_node = goal;
     while came_from.contains_key(&current_node) {
@@ -149,26 +149,26 @@ fn a_star(
                 .filter(|(key, _)| open_set.contains(key))
                 // Min by is not constant since it returns the first min it encounter in case of equality, and order can't be assurer in a Hashmap
                 // Less efficient, but with the wanted constrain
-                //.min_by(|v_a, v_b| v_a.cmp(v_b))
-                .fold(None, |acc, (key, val)| {
+                // .min_by(|v_a, v_b| v_a.cmp(v_b))
+                .fold(None, |acc: Option<(Position, i32)>, (key, val)| {
                     if let Some((p_key, p_val)) = acc {
-                        if val < p_val {
-                            Some((key, val))
-                        } else if val == p_val && (key.1 < p_key.1
-                            || key.1 == p_key.1 && key.0 < p_key.0) {
-                            Some((key, val))
+                        if *val < p_val
+                            || (*val == p_val
+                                && (key.1 < p_key.1 || key.1 == p_key.1 && key.0 < p_key.0))
+                        {
+                            Some((*key, *val))
                         } else {
                             Some((p_key, p_val))
                         }
                     } else {
-                        Some((key, val))
+                        Some((*key, *val))
                     }
                 })
                 .unwrap();
-            current = temp.clone();
+            current = temp;
         }
         if current == goal {
-            return Some(reconstruct_path(came_from, goal));
+            return Some(reconstruct_path(&came_from, goal));
         }
 
         open_set.remove(&current);
@@ -203,9 +203,15 @@ fn a_star(
     None
 }
 
-fn move_attack(attacker: &mut Character, enemies: &mut Vec<Character>, map: &mut Vec<Tile>, line_size: usize) {
+fn move_attack(
+    attacker: &mut Character,
+    enemies: &mut Vec<Character>,
+    map: &mut Vec<Tile>,
+    line_size: usize,
+) {
     let mut closest_enemy = Vec::new();
     let mut closest_enemy_position = (0, 0);
+    let neighbors = &[(0, -1), (-1, 0), (1, 0), (0, 1)];
     /*Move*/
     // Look for closest enemy
     for enemy in enemies.iter() {
@@ -213,20 +219,47 @@ fn move_attack(attacker: &mut Character, enemies: &mut Vec<Character>, map: &mut
             if closest_enemy.len() == 1 {
                 break;
             }
-            if closest_enemy.is_empty() || closest_enemy.len() > path_to_enemy.len() {
+            if closest_enemy.is_empty()
+                || closest_enemy.len() > path_to_enemy.len()
+                || (closest_enemy.len() == path_to_enemy.len()
+                    && (enemy.position.1 < closest_enemy_position.1
+                        || (enemy.position.1 == closest_enemy_position.1
+                            && enemy.position.0 == closest_enemy_position.0)))
+            {
                 closest_enemy = path_to_enemy;
                 closest_enemy_position = enemy.position;
-            } else if closest_enemy.len() == path_to_enemy.len() {
-                if enemy.position.1 < closest_enemy_position.1 || enemy.position.1 == closest_enemy_position.1 && enemy.position.0 == closest_enemy_position.0 {
-                    closest_enemy = path_to_enemy;
-                    closest_enemy_position = enemy.position;
-                }
             }
         }
     }
     // If enemy is close enough but not in range
     if !closest_enemy.is_empty() && closest_enemy.len() > 1 {
-        let next_position = closest_enemy.pop().unwrap();
+        let mut next_position = (1, 1);
+        {
+            let mut correct_path: Option<Vec<Position>> = None;
+            for n in neighbors {
+                let adjacent = (
+                    (attacker.position.0 as i32 + n.0) as usize,
+                    (attacker.position.1 as i32 + n.1) as usize,
+                );
+                if map[adjacent.0 + adjacent.1 * line_size] != Tile::Empty {
+                    continue;
+                } else if let Some(path_to_adjacent) =
+                    a_star(adjacent, closest_enemy_position, &map, line_size)
+                {
+                    correct_path = if let Some(p_path) = correct_path {
+                        if p_path.len() > path_to_adjacent.len() {
+                            next_position = adjacent;
+                            Some(path_to_adjacent)
+                        } else {
+                            Some(p_path)
+                        }
+                    } else {
+                        next_position = adjacent;
+                        Some(path_to_adjacent)
+                    }
+                }
+            }
+        }
         map[attacker.position.0 + attacker.position.1 * line_size] = Tile::Empty;
         attacker.position = next_position;
         map[attacker.position.0 + attacker.position.1 * line_size] = match attacker.clan {
@@ -240,18 +273,25 @@ fn move_attack(attacker: &mut Character, enemies: &mut Vec<Character>, map: &mut
         let mut dead_position = 0;
         let mut is_dead = false;
         {
-            let attack_on_titan: Option<(&mut Character, usize)> = enemies.iter_mut().enumerate().filter(|(_, enemy)| manhattan_dist(enemy.position, attacker.position) == 1).fold(None, |acc, (index, enemy)| {
-                if let Some((previous, pr_index)) = acc {
-                    if enemy.hp < previous.hp 
-                    || enemy.position.1 < previous.position.1
-                    || enemy.position.1 == previous.position.1 && enemy.position.0 < previous.position.0 {
+            let attack_on_titan: Option<(&mut Character, usize)> = enemies
+                .iter_mut()
+                .enumerate()
+                .filter(|(_, enemy)| manhattan_dist(enemy.position, attacker.position) == 1)
+                .fold(None, |acc, (index, enemy)| {
+                    if let Some((previous, pr_index)) = acc {
+                        if enemy.hp < previous.hp
+                            || enemy.hp == previous.hp
+                                && (enemy.position.1 < previous.position.1
+                                    || enemy.position.1 == previous.position.1
+                                        && enemy.position.0 < previous.position.0)
+                        {
+                            return Some((enemy, index));
+                        }
+                        return Some((previous, pr_index));
+                    } else {
                         return Some((enemy, index));
                     }
-                    return Some((previous, pr_index));
-                } else {
-                    return Some((enemy, index));
-                }
-            });
+                });
             if let Some((victim, index)) = attack_on_titan {
                 victim.hp -= attacker.atk;
                 if victim.hp <= 0 {
@@ -262,8 +302,8 @@ fn move_attack(attacker: &mut Character, enemies: &mut Vec<Character>, map: &mut
             }
         }
         if is_dead {
-           map[dead_position] = Tile::Empty;
-           enemies.swap_remove(swap_remove_index);
+            map[dead_position] = Tile::Empty;
+            enemies.swap_remove(swap_remove_index);
         }
     }
 }
@@ -278,7 +318,7 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
     let surviving_team;
 
     'main: loop {
-        // Can't iter through map since we need both to alter (so mutable borrow) it and to send it to the a* function (so another borrow within) 
+        // Can't iter through map since we need both to alter (so mutable borrow) it and to send it to the a* function (so another borrow within)
         let mut already_moved = HashSet::new();
         for index in 0..map.len() {
             let tile = map[index];
@@ -294,8 +334,9 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
                         .iter_mut()
                         .find(|goblin| goblin.position == position)
                         .unwrap();
-                        // Hashing the raw pointer to the object, we can't use the object itself as an hash since it mutate through the game
-                    if already_moved.insert(goblin as *const Character) {
+                    // Hashing the raw pointer to the object, we can't use the object itself as an hash since it mutate through the game
+                    // We can't use raw pointer either: can mutate when removing dead character, meaning false positive when character is trying to take its turn
+                    if already_moved.insert(goblin.id) {
                         move_attack(&mut goblin, &mut elves, &mut map, line_size);
                     }
                 }
@@ -309,23 +350,17 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
                         .iter_mut()
                         .find(|elf| elf.position == position)
                         .unwrap();
-                    if already_moved.insert(elf as *const Character) {
+                    if already_moved.insert(elf.id) {
                         move_attack(&mut elf, &mut goblins, &mut map, line_size);
                     }
                 }
                 _ => {}
             }
         }
-        round += 1;
-
-
-        if round == 50 {
-            surviving_team = elves;
-            break;
-        }
+        round += 1
     }
 
-    for (index, t) in map.iter().enumerate() {
+    /*for (index, t) in map.iter().enumerate() {
         let tile = match t {
             Tile::Empty => '.',
             Tile::Goblin => 'G',
@@ -337,9 +372,15 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
         } else {
             print!("{}", tile);
         }
-    }
-    println!("Surviving team: {}, on {} rounds", surviving_team.len(), round);
+    }*/
+    let total_hp = surviving_team.iter().fold(0, |acc, survivor| {
+        //println!("{}", survivor.hp);
+        acc + survivor.hp
+    });
+    println!("Score: {} in {} rounds", total_hp * round, round);
     Ok(())
+
+    // 241142 too high
 }
 
 pub fn second_star() -> Result<(), Box<Error + 'static>> {
