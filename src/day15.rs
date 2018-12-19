@@ -91,13 +91,6 @@ fn get_npcs(map: &[Tile], line_size: usize) -> (Vec<Character>, Vec<Character>) 
 
     (elves, goblins)
 }
-#[derive(Debug, Copy, Clone)]
-struct Node {
-    c: usize,
-    y: usize,
-    heuristic: usize,
-    cost: usize,
-}
 
 type Position = (usize, usize);
 
@@ -118,9 +111,9 @@ fn reconstruct_path(came_from: &HashMap<Position, Position>, goal: Position) -> 
 }
 
 // Roughly translated from the pseudocode found on https://en.wikipedia.org/wiki/A*_search_algorithm#Pseudocode
-fn a_star(
+fn all_star(
     start: Position,
-    goal: Position,
+    goals: &[Position],
     map: &[Tile],
     line_size: usize,
 ) -> Option<Vec<Position>> {
@@ -136,12 +129,15 @@ fn a_star(
 
     // f_score is the total cost of getting from start to goal passing by that node
     let mut f_score = HashMap::<Position, i32>::new();
-    f_score.insert(start, manhattan_dist(start, goal));
+    let mut possible_goal = Vec::<Position>::new();
+    let mut shortest_dist: Option<i32> = None;
+    f_score.insert(start, 0);
 
     let neighbors = &[(0, -1), (-1, 0), (1, 0), (0, 1)];
 
     while !open_set.is_empty() {
         let current;
+        let value;
         // The scope is here to allow the later insertion into f_score, otherwise we would have a dangling borrow to f_score preventing us to do so
         {
             let (temp, _) = f_score
@@ -149,7 +145,6 @@ fn a_star(
                 .filter(|(key, _)| open_set.contains(key))
                 // Min by is not constant since it returns the first min it encounter in case of equality, and order can't be assurer in a Hashmap
                 // Less efficient, but with the wanted constrain
-                // .min_by(|v_a, v_b| v_a.cmp(v_b))
                 .fold(None, |acc: Option<(Position, i32)>, (key, val)| {
                     if let Some((p_key, p_val)) = acc {
                         if *val < p_val
@@ -166,13 +161,23 @@ fn a_star(
                 })
                 .unwrap();
             current = temp;
-        }
-        if current == goal {
-            return Some(reconstruct_path(&came_from, goal));
-        }
+            value = g_score[&current];
 
+            if let Some(shortest) = shortest_dist {
+                if value > shortest {
+                    break;
+                }
+            }
+        }
         open_set.remove(&current);
         closed_set.insert(current);
+
+        if goals.contains(&current) {
+            possible_goal.push(current);
+            shortest_dist = Some(g_score[&current]);
+            // return Some(reconstruct_path(&came_from, current));
+            continue;
+        }
 
         for n in neighbors {
             let neighbor = (
@@ -182,7 +187,8 @@ fn a_star(
 
             // Do not consider it if it's an obstacle
             if closed_set.contains(&neighbor)
-                || (neighbor != goal && map[neighbor.0 + neighbor.1 * line_size] != Tile::Empty)
+                || (!goals.contains(&neighbor)
+                    && map[neighbor.0 + neighbor.1 * line_size] != Tile::Empty)
             {
                 continue;
             }
@@ -197,7 +203,61 @@ fn a_star(
 
             came_from.insert(neighbor, current);
             g_score.insert(neighbor, tentative_g_score);
-            f_score.insert(neighbor, tentative_g_score + manhattan_dist(neighbor, goal));
+            f_score.insert(neighbor, tentative_g_score);
+        }
+    }
+    // In case we have at least one possible answer by the time we ran out of path to take
+    {
+        let paths: HashMap<Position, Vec<Position>> = possible_goal
+            .iter()
+            .map(|goal| (*goal, reconstruct_path(&came_from, *goal)))
+            .collect();
+        if !paths.is_empty() {
+            let min_len = paths
+                .values()
+                .min_by(|va, vb| {
+                    if va.len() != vb.len() {
+                        va.len().cmp(&vb.len())
+                    } else {
+                        let (first_posi, second_posi) = (va[0], vb[0]);
+                        if first_posi.1 != second_posi.1 {
+                            first_posi.1.cmp(&second_posi.1)
+                        } else {
+                            first_posi.0.cmp(&second_posi.0)
+                        }
+                    }
+                })
+                .unwrap()
+                .len();
+
+            let candidate = paths.iter().filter(|(_, value)| value.len() == min_len);
+            let (_, min) = candidate
+                .fold(
+                    None,
+                    |acc: Option<(Position, Vec<Position>)>, (key, value)| {
+                        if let Some((p_key, p_val)) = acc {
+                            let p_start = p_val[0];
+                            let start = value[0];
+
+                            if p_key.1 > key.0
+                                || (p_key.1 == key.1 && p_key.0 > key.0)
+                                || (p_key == *key
+                                    && (p_start.1 > start.0
+                                        || (p_start.1 == start.1 && p_start.0 > start.0)))
+                            {
+                                // Check move priority
+                                Some((*key, value.to_vec()))
+                            } else {
+                                Some((p_key, p_val))
+                            }
+                        } else {
+                            Some((*key, value.to_vec()))
+                        }
+                    },
+                )
+                .unwrap();
+
+            return Some(min.to_vec());
         }
     }
     None
@@ -210,56 +270,16 @@ fn move_attack(
     line_size: usize,
 ) {
     let mut closest_enemy = Vec::new();
-    let mut closest_enemy_position = (0, 0);
-    let neighbors = &[(0, -1), (-1, 0), (1, 0), (0, 1)];
     /*Move*/
     // Look for closest enemy
-    for enemy in enemies.iter() {
-        if let Some(path_to_enemy) = a_star(attacker.position, enemy.position, &map, line_size) {
-            if closest_enemy.len() == 1 {
-                break;
-            }
-            if closest_enemy.is_empty()
-                || closest_enemy.len() > path_to_enemy.len()
-                || (closest_enemy.len() == path_to_enemy.len()
-                    && (enemy.position.1 < closest_enemy_position.1
-                        || (enemy.position.1 == closest_enemy_position.1
-                            && enemy.position.0 == closest_enemy_position.0)))
-            {
-                closest_enemy = path_to_enemy;
-                closest_enemy_position = enemy.position;
-            }
-        }
+    // Took the all_star idea on a js code by albertobastos
+    let enemies_positions: Vec<Position> = enemies.iter().map(|e| e.position).collect();
+    if let Some(result) = all_star(attacker.position, &enemies_positions, &map, line_size) {
+        closest_enemy = result;
     }
     // If enemy is close enough but not in range
     if !closest_enemy.is_empty() && closest_enemy.len() > 1 {
-        let mut next_position = (1, 1);
-        {
-            let mut correct_path: Option<Vec<Position>> = None;
-            for n in neighbors {
-                let adjacent = (
-                    (attacker.position.0 as i32 + n.0) as usize,
-                    (attacker.position.1 as i32 + n.1) as usize,
-                );
-                if map[adjacent.0 + adjacent.1 * line_size] != Tile::Empty {
-                    continue;
-                } else if let Some(path_to_adjacent) =
-                    a_star(adjacent, closest_enemy_position, &map, line_size)
-                {
-                    correct_path = if let Some(p_path) = correct_path {
-                        if p_path.len() > path_to_adjacent.len() {
-                            next_position = adjacent;
-                            Some(path_to_adjacent)
-                        } else {
-                            Some(p_path)
-                        }
-                    } else {
-                        next_position = adjacent;
-                        Some(path_to_adjacent)
-                    }
-                }
-            }
-        }
+        let next_position = closest_enemy.pop().unwrap();
         map[attacker.position.0 + attacker.position.1 * line_size] = Tile::Empty;
         attacker.position = next_position;
         map[attacker.position.0 + attacker.position.1 * line_size] = match attacker.clan {
@@ -380,7 +400,8 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
     println!("Score: {} in {} rounds", total_hp * round, round);
     Ok(())
 
-    // 241142 too high
+    // 241142 too high (97)
+    // 199290 too high (78)
 }
 
 pub fn second_star() -> Result<(), Box<Error + 'static>> {
