@@ -130,14 +130,12 @@ fn all_star(
     // f_score is the total cost of getting from start to goal passing by that node
     let mut f_score = HashMap::<Position, i32>::new();
     let mut possible_goal = Vec::<Position>::new();
-    let mut shortest_dist: Option<i32> = None;
     f_score.insert(start, 0);
 
     let neighbors = &[(0, -1), (-1, 0), (1, 0), (0, 1)];
 
     while !open_set.is_empty() {
         let current;
-        let value;
         // The scope is here to allow the later insertion into f_score, otherwise we would have a dangling borrow to f_score preventing us to do so
         {
             let (temp, _) = f_score
@@ -161,21 +159,12 @@ fn all_star(
                 })
                 .unwrap();
             current = temp;
-            value = g_score[&current];
-
-            if let Some(shortest) = shortest_dist {
-                if value > shortest {
-                    break;
-                }
-            }
         }
         open_set.remove(&current);
         closed_set.insert(current);
 
         if goals.contains(&current) {
             possible_goal.push(current);
-            shortest_dist = Some(g_score[&current]);
-            // return Some(reconstruct_path(&came_from, current));
             continue;
         }
 
@@ -206,7 +195,6 @@ fn all_star(
             f_score.insert(neighbor, tentative_g_score);
         }
     }
-    // In case we have at least one possible answer by the time we ran out of path to take
     {
         let paths: HashMap<Position, Vec<Position>> = possible_goal
             .iter()
@@ -229,17 +217,16 @@ fn all_star(
                 })
                 .unwrap()
                 .len();
-
             let candidate = paths.iter().filter(|(_, value)| value.len() == min_len);
             let (_, min) = candidate
                 .fold(
                     None,
                     |acc: Option<(Position, Vec<Position>)>, (key, value)| {
                         if let Some((p_key, p_val)) = acc {
-                            let p_start = p_val[0];
-                            let start = value[0];
+                            let p_start = *p_val.last().unwrap();
+                            let start = value.last().unwrap();
 
-                            if p_key.1 > key.0
+                            if p_key.1 > key.1
                                 || (p_key.1 == key.1 && p_key.0 > key.0)
                                 || (p_key == *key
                                     && (p_start.1 > start.0
@@ -380,6 +367,7 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
         round += 1
     }
 
+    visualize(&map, line_size);
     let total_hp = surviving_team.iter().fold(0, |acc, survivor| {
         acc + survivor.hp
     });
@@ -388,13 +376,13 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
 }
 
 pub fn second_star() -> Result<(), Box<Error + 'static>> {
-       use self::Tile::*;
+    use self::Tile::*;
 
     let (map, line_size) = get_map();
     let (elves, goblins) = get_npcs(&map, line_size);
 
     let mut round;
-    let mut base_elf_power = 14;
+    let mut base_elf_power = 12;
     let surviving_team;
 
     'main: loop {
@@ -430,9 +418,8 @@ pub fn second_star() -> Result<(), Box<Error + 'static>> {
                         if goblins_sub.is_empty() {
                             if elves_sub.len() == elves.len() {
                                 surviving_team = elves_sub;
+                                visualize(&map_sub, line_size);
                                 break 'main;
-                            } else {
-                                continue 'main;
                             }
                         }
                         let mut elf = elves_sub
@@ -446,7 +433,12 @@ pub fn second_star() -> Result<(), Box<Error + 'static>> {
                     _ => {}
                 }
             }
-            round += 1
+            round += 1;
+
+            if round == 13 {
+                visualize(&map_sub, line_size);
+                return Ok(());
+            }
         }
     }
     
@@ -455,6 +447,25 @@ pub fn second_star() -> Result<(), Box<Error + 'static>> {
     });
     println!("Score: {} in {} rounds with {} atk", total_hp * round, round, base_elf_power);
     // 67595 too high
+    // 67069 too high
+    // 58753 too low
 
     Ok(())
+}
+
+fn visualize(map: &[Tile], line_size: usize) {
+    let mut txt = "".to_string();
+    for (index, i) in map.iter().enumerate() {
+        let temp = match i {
+            Tile::Empty => ".",
+            Tile::Wall => "#",
+            Tile::Goblin => "G",
+            Tile::Elf => "E"
+        };
+        txt.push_str(temp);
+        if index % line_size == line_size - 1 {
+            txt.push('\n');
+        }
+    }
+    println!("{}", txt);
 }
