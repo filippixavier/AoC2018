@@ -99,7 +99,7 @@ fn manhattan_dist(start: Position, end: Position) -> i32 {
     (start.0 as i32 - end.0 as i32).abs() + (start.1 as i32 - end.1 as i32).abs()
 }
 
-fn reconstruct_path(came_from: &HashMap<Position, Position>, goal: Position) -> Vec<Position> {
+fn reconstruct_path(came_from: &HashMap<usize, usize>, goal: usize) -> Vec<usize> {
     let mut path = vec![goal];
     let mut current_node = goal;
     while came_from.contains_key(&current_node) {
@@ -117,22 +117,25 @@ fn all_star(
     map: &[Tile],
     line_size: usize,
 ) -> Option<Vec<Position>> {
-    let mut closed_set = HashSet::<Position>::new();
-    let mut open_set = HashSet::<Position>::new();
-    open_set.insert(start);
+    let start_index = start.0 + start.1 * line_size;
+    let goals_index: Vec<usize> = goals.iter().map(|pos| pos.0 + pos.1 * line_size).collect();
 
-    let mut came_from = HashMap::<Position, Position>::new();
+    let mut closed_set = HashSet::<usize>::new();
+    let mut open_set = HashSet::<usize>::new();
+    open_set.insert(start_index);
+
+    let mut came_from = HashMap::<usize, usize>::new();
 
     // g_score Map the cost of getting from the start node to the key node
-    let mut g_score = HashMap::<Position, i32>::new();
-    g_score.insert(start, 0);
+    let mut g_score = HashMap::<usize, i32>::new();
+    g_score.insert(start_index, 0);
 
     // f_score is the total cost of getting from start to goal passing by that node
-    let mut f_score = HashMap::<Position, i32>::new();
-    let mut possible_goal = Vec::<Position>::new();
-    f_score.insert(start, 0);
+    let mut f_score = HashMap::<usize, f32>::new();
+    let mut possible_goal = Vec::<usize>::new();
+    f_score.insert(start_index, 0.0);
 
-    let neighbors = &[(0, -1), (-1, 0), (1, 0), (0, 1)];
+    let neighbors = &[(-(line_size as i32), 0.04), (-1, 0.03), (1, 0.02), (line_size as i32, 0.01)];
 
     while !open_set.is_empty() {
         let current;
@@ -141,20 +144,19 @@ fn all_star(
             let (temp, _) = f_score
                 .iter()
                 .filter(|(key, _)| open_set.contains(key))
+                // .min_by(|(_, &val), (_, &val_b)| val.partial_cmp(&val_b).unwrap_or(std::cmp::Ordering::Equal))
                 // Min by is not constant since it returns the first min it encounter in case of equality, and order can't be assurer in a Hashmap
                 // Less efficient, but with the wanted constrain
-                .fold(None, |acc: Option<(Position, i32)>, (key, val)| {
-                    if let Some((p_key, p_val)) = acc {
-                        if *val < p_val
-                            || (*val == p_val
-                                && (key.1 < p_key.1 || key.1 == p_key.1 && key.0 < p_key.0))
+                .fold(None, |acc: Option<(usize, f32)>, (index, val)| {
+                    if let Some((p_index, p_val)) = acc {
+                        if *val < p_val || (*val == p_val && index < &p_index)
                         {
-                            Some((*key, *val))
+                            Some((*index, *val))
                         } else {
-                            Some((p_key, p_val))
+                            Some((p_index, p_val))
                         }
                     } else {
-                        Some((*key, *val))
+                        Some((*index, *val))
                     }
                 })
                 .unwrap();
@@ -163,21 +165,21 @@ fn all_star(
         open_set.remove(&current);
         closed_set.insert(current);
 
-        if goals.contains(&current) {
+        if goals_index.contains(&current) {
             possible_goal.push(current);
+            if possible_goal.len() == goals_index.len() {
+                break;
+            }
             continue;
         }
 
         for n in neighbors {
-            let neighbor = (
-                (n.0 + current.0 as i32) as usize,
-                (n.1 + current.1 as i32) as usize,
-            );
+            let neighbor = (current as i32 + n.0) as usize;
 
             // Do not consider it if it's an obstacle
             if closed_set.contains(&neighbor)
-                || (!goals.contains(&neighbor)
-                    && map[neighbor.0 + neighbor.1 * line_size] != Tile::Empty)
+                || (!goals_index.contains(&neighbor)
+                    && map[neighbor] != Tile::Empty)
             {
                 continue;
             }
@@ -192,59 +194,21 @@ fn all_star(
 
             came_from.insert(neighbor, current);
             g_score.insert(neighbor, tentative_g_score);
-            f_score.insert(neighbor, tentative_g_score);
+            f_score.insert(neighbor, (tentative_g_score as f32) - n.1);
         }
     }
     {
-        let paths: HashMap<Position, Vec<Position>> = possible_goal
-            .iter()
-            .map(|goal| (*goal, reconstruct_path(&came_from, *goal)))
-            .collect();
-        if !paths.is_empty() {
-            let min_len = paths
-                .values()
-                .min_by(|va, vb| {
-                    if va.len() != vb.len() {
-                        va.len().cmp(&vb.len())
-                    } else {
-                        let (first_posi, second_posi) = (va[0], vb[0]);
-                        if first_posi.1 != second_posi.1 {
-                            first_posi.1.cmp(&second_posi.1)
-                        } else {
-                            first_posi.0.cmp(&second_posi.0)
-                        }
-                    }
-                })
-                .unwrap()
-                .len();
-            let candidate = paths.iter().filter(|(_, value)| value.len() == min_len);
-            let (_, min) = candidate
-                .fold(
-                    None,
-                    |acc: Option<(Position, Vec<Position>)>, (key, value)| {
-                        if let Some((p_key, p_val)) = acc {
-                            let p_start = *p_val.last().unwrap();
-                            let start = value.last().unwrap();
+        if !possible_goal.is_empty() {
+            let paths: Vec<Vec<usize>> = possible_goal.iter().cloned().map(|goal| reconstruct_path(&came_from, goal)).collect();
+            let min = paths.iter().min_by(|va, vb| va.len().cmp(&vb.len())).unwrap().len();
+            let min_path_index = paths.iter().cloned().filter(|path| path.len() == min).min_by(|va, vb| {
+                let (end_a, end_b) = (va.last().unwrap(), vb.last().unwrap());
+                return end_a.cmp(end_b);
+            });
 
-                            if p_key.1 > key.1
-                                || (p_key.1 == key.1 && p_key.0 > key.0)
-                                || (p_key == *key
-                                    && (p_start.1 > start.0
-                                        || (p_start.1 == start.1 && p_start.0 > start.0)))
-                            {
-                                // Check move priority
-                                Some((*key, value.to_vec()))
-                            } else {
-                                Some((p_key, p_val))
-                            }
-                        } else {
-                            Some((*key, value.to_vec()))
-                        }
-                    },
-                )
-                .unwrap();
-
-            return Some(min.to_vec());
+            if let Some(min_path) = min_path_index {
+                return Some(min_path.iter().cloned().map(|index| (index % line_size, index / line_size)).collect::<Vec<Position>>());
+            }
         }
     }
     None
@@ -325,6 +289,7 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
     let surviving_team;
 
     'main: loop {
+        // visualize(&map, line_size);
         // Can't iter through map since we need both to alter (so mutable borrow) it and to send it to the a* function (so another borrow within)
         let mut already_moved = HashSet::new();
         for index in 0..map.len() {
@@ -367,7 +332,7 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
         round += 1
     }
 
-    visualize(&map, line_size);
+    // visualize(&map, line_size);
     let total_hp = surviving_team.iter().fold(0, |acc, survivor| {
         acc + survivor.hp
     });
@@ -376,13 +341,13 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
 }
 
 pub fn second_star() -> Result<(), Box<Error + 'static>> {
-    use self::Tile::*;
+    /*use self::Tile::*;
 
     let (map, line_size) = get_map();
     let (elves, goblins) = get_npcs(&map, line_size);
 
     let mut round;
-    let mut base_elf_power = 12;
+    let mut base_elf_power = 4;
     let surviving_team;
 
     'main: loop {
@@ -434,11 +399,6 @@ pub fn second_star() -> Result<(), Box<Error + 'static>> {
                 }
             }
             round += 1;
-
-            if round == 13 {
-                visualize(&map_sub, line_size);
-                return Ok(());
-            }
         }
     }
     
@@ -448,7 +408,8 @@ pub fn second_star() -> Result<(), Box<Error + 'static>> {
     println!("Score: {} in {} rounds with {} atk", total_hp * round, round, base_elf_power);
     // 67595 too high
     // 67069 too high
-    // 58753 too low
+    // 61490 not correct? 
+    // 58753 too low*/
 
     Ok(())
 }
