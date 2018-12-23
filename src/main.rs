@@ -16,6 +16,8 @@ mod day14;
 mod day15;
 #[cfg(feature = "day16")]
 mod day16;
+#[cfg(feature = "day17")]
+mod day17;
 #[cfg(feature = "day2")]
 mod day2;
 #[cfg(feature = "day3")]
@@ -49,6 +51,8 @@ use day14::*;
 use day15::*;
 #[cfg(feature = "day16")]
 use day16::*;
+#[cfg(feature = "day17")]
+use day17::*;
 #[cfg(feature = "day2")]
 use day2::*;
 #[cfg(feature = "day3")]
