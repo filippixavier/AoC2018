@@ -119,7 +119,7 @@ fn prepare_input() -> (Vec<Tile>, usize, usize, usize) {
             let offset_y_min = min - unwrap_min_y;
             let offset_y_max = max - unwrap_min_y;
 
-            for i in offset_y_min..offset_y_max + 1 {
+            for i in offset_y_min..=offset_y_max {
                 map[i * line_size + offset_x] = Tile::Mud;
             }
         }
@@ -148,91 +148,87 @@ fn visualize(map: &[Tile], line_size: usize) {
 pub fn first_star() -> Result<(), Box<Error + 'static>> {
     let (mut map, min_y, min_x, line_size) = prepare_input();
 
-    let start_pos = 500 - min_x;
+    let start_pos = 501 - min_x;
     let mut dripping_water = vec![start_pos];
     let mut filling_water = Vec::new();
 
-    while !dripping_water.is_empty() {
-        let mut water_drop = dripping_water.pop().unwrap();
+    // It's all a matter of strict rules, bet it could be better written as some kind of Finite State Machine
+    loop {
+        while !dripping_water.is_empty() {
+            let mut drop = dripping_water.pop().unwrap();
+            while drop < map.len() && map[drop] == Tile::Sand {
+                map[drop] = Tile::Drop;
+                drop += line_size;
+            }
 
-        while water_drop < map.len()
-            && (map[water_drop] == Tile::Sand || map[water_drop] == Tile::Drop)
-        {
-            map[water_drop] = Tile::Drop;
-            water_drop += line_size;
+            // We don't want to treat either overflowing water or running water as it as already been treated
+            if drop < map.len() && map[drop] != Tile::Drop {
+                filling_water.push(drop);
+            }
         }
 
-        if water_drop - line_size < min_y {
-            continue;
+        'filling: while !filling_water.is_empty() {
+            let mut fill = filling_water.pop().unwrap();
+
+            // Bubble the dropping point until suitable height, the min check doesn't apply in my input
+            while map[fill] != Tile::Sand && map[fill] != Tile::Drop {
+                fill -= line_size;
+                if fill < min_y {
+                    continue 'filling;
+                }
+            }
+
+            map[fill] = Tile::Fill;
+
+            let mut fill_left = fill - 1;
+
+            // ALWAYS check EVRERY tile until water drop or is blocked by mud, else we could have weird "water blocking water" case
+            while map[fill_left] != Tile::Mud
+                && (map[fill_left + line_size] == Tile::Fill
+                    || map[fill_left + line_size] == Tile::Mud)
+            {
+                map[fill_left] = Tile::Fill;
+                fill_left -= 1;
+            }
+
+            let mut fill_right = fill + 1;
+            while map[fill_right] != Tile::Mud
+                && (map[fill_right + line_size] == Tile::Fill
+                    || map[fill_right + line_size] == Tile::Mud)
+            {
+                map[fill_right] = Tile::Fill;
+                fill_right += 1;
+            }
+
+            // Having mud on both side is the only valid case of water rising
+            if map[fill_left] == map[fill_right] && map[fill_left] == Tile::Mud {
+                filling_water.push(fill - line_size);
+            } else {
+                for tile in map.iter_mut().take(fill_right).skip(fill_left + 1) {
+                    *tile = Tile::Drop;
+                }
+                if map[fill_left] == Tile::Sand {
+                    dripping_water.push(fill_left);
+                }
+                if map[fill_right] == Tile::Sand {
+                    dripping_water.push(fill_right);
+                }
+            }
         }
-
-        filling_water.push(water_drop - line_size);
-
-        while !filling_water.is_empty() {
-            let water_drop = filling_water.pop().unwrap();
-            let mut left_fill = water_drop - 1;
-            let mut right_fill = water_drop + 1;
-            map[water_drop] = Tile::Fill;
-
-            if map[left_fill] == Tile::Fill && map[right_fill] == Tile::Fill {
-                continue;
-            }
-
-            while (map[left_fill] == Tile::Sand || map[left_fill] == Tile::Drop)
-                && (map[left_fill + line_size] == Tile::Mud
-                    || map[left_fill + line_size] == Tile::Fill)
-            {
-                map[left_fill] = Tile::Fill;
-                left_fill -= 1;
-            }
-            if right_fill + line_size > map.len() {
-                visualize(&map, line_size);
-                return Ok(());
-            }
-            while (map[right_fill] == Tile::Sand || map[right_fill] == Tile::Drop)
-                && (map[right_fill + line_size] == Tile::Mud
-                    || map[right_fill + line_size] == Tile::Fill)
-            {
-                map[right_fill] = Tile::Fill;
-                right_fill += 1;
-            }
-
-            if map[right_fill] == map[left_fill] && map[left_fill] == Tile::Mud {
-                filling_water.push(water_drop - line_size);
-            }
-
-            if map[left_fill] == Tile::Sand {
-                for i in left_fill..right_fill {
-                    map[i] = match map[i] {
-                        Tile::Fill => Tile::Drop,
-                        _ => map[i],
-                    };
-                }
-                dripping_water.push(left_fill);
-            }
-
-            if map[right_fill] == Tile::Sand {
-                for i in left_fill..right_fill {
-                    map[i] = match map[i] {
-                        Tile::Fill => Tile::Drop,
-                        _ => map[i],
-                    };
-                }
-                dripping_water.push(right_fill);
-            }
+        if dripping_water.is_empty() && filling_water.is_empty() {
+            break;
         }
     }
-    visualize(&map, line_size);
+
+    // visualize(&map, line_size);
 
     let count = map
         .iter()
         .filter(|tile| **tile == Tile::Fill || **tile == Tile::Drop)
-        .collect::<Vec<_>>()
-        .len();
+        .count();
 
     println!("Filled water: {}", count);
 
-    // 35439 too high
     Ok(())
 }
 
