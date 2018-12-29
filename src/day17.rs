@@ -145,7 +145,7 @@ fn visualize(map: &[Tile], line_size: usize) {
     println!("{}", txt);
 }
 
-pub fn first_star() -> Result<(), Box<Error + 'static>> {
+fn fill_water() -> Vec<Tile> {
     let (mut map, min_y, min_x, line_size) = prepare_input();
 
     let start_pos = 501 - min_x;
@@ -220,8 +220,13 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
         }
     }
 
-    // visualize(&map, line_size);
+    map
+}
 
+pub fn first_star() -> Result<(), Box<Error + 'static>> {
+    let map = fill_water();
+
+    // visualize(&map, line_size);
     let count = map
         .iter()
         .filter(|tile| **tile == Tile::Fill || **tile == Tile::Drop)
@@ -233,5 +238,15 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
 }
 
 pub fn second_star() -> Result<(), Box<Error + 'static>> {
+    let map = fill_water();
+
+    // visualize(&map, line_size);
+    let count = map
+        .iter()
+        .filter(|tile| **tile == Tile::Fill)
+        .count();
+
+    println!("Filled water: {}", count);
+
     Ok(())
 }
