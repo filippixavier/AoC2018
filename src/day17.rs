@@ -241,10 +241,7 @@ pub fn second_star() -> Result<(), Box<Error + 'static>> {
     let map = fill_water();
 
     // visualize(&map, line_size);
-    let count = map
-        .iter()
-        .filter(|tile| **tile == Tile::Fill)
-        .count();
+    let count = map.iter().filter(|tile| **tile == Tile::Fill).count();
 
     println!("Filled water: {}", count);
 
