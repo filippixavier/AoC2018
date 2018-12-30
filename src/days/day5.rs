@@ -8,7 +8,7 @@ use self::regex::Regex;
 
 pub fn first_star() -> Result<(), Box<Error + 'static>> {
     let alpha = Regex::new(r"aA|Aa|bB|Bb|cC|Cc|dD|Dd|eE|Ee|fF|Ff|gG|Gg|hH|Hh|iI|Ii|jJ|Jj|kK|Kk|lL|Ll|mM|Mm|nN|Nn|oO|Oo|pP|Pp|qQ|Qq|rR|Rr|sS|Ss|tT|Tt|uU|Uu|vV|Vv|wW|Ww|xX|Xx|yY|Yy|zZ|Zz").unwrap();
-    let file = fs::read_to_string(Path::new("./data/day5.txt"))?;
+    let file = fs::read_to_string(Path::new("../data/day5.txt"))?;
     let mut input = file;
 
     input = remove_all(input, &alpha);
@@ -19,7 +19,7 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
 pub fn second_star() -> Result<(), Box<Error + 'static>> {
     let alpha = Regex::new(r"aA|Aa|bB|Bb|cC|Cc|dD|Dd|eE|Ee|fF|Ff|gG|Gg|hH|Hh|iI|Ii|jJ|Jj|kK|Kk|lL|Ll|mM|Mm|nN|Nn|oO|Oo|pP|Pp|qQ|Qq|rR|Rr|sS|Ss|tT|Tt|uU|Uu|vV|Vv|wW|Ww|xX|Xx|yY|Yy|zZ|Zz").unwrap();
     let alphabet = "abcdefghijklmnopqrstuvwxyz".split("");
-    let file = fs::read_to_string(Path::new("./data/day5.txt"))?;
+    let file = fs::read_to_string(Path::new("../data/day5.txt"))?;
     let input = file;
     let mut min_size = input.len();
     let mut letter_to_remove = "";

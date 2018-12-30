@@ -10,55 +10,55 @@ use std::collections::HashSet;
 
 use self::regex::Regex;
 
-pub fn addr(registers: &mut [usize; 4], reg_a: usize, reg_b: usize, reg_c: usize) {
+pub fn addr(registers: &mut [usize], reg_a: usize, reg_b: usize, reg_c: usize) {
     registers[reg_c] = registers[reg_a] + registers[reg_b];
 }
 
-pub fn addi(registers: &mut [usize; 4], reg_a: usize, value: usize, reg_c: usize) {
+pub fn addi(registers: &mut [usize], reg_a: usize, value: usize, reg_c: usize) {
     registers[reg_c] = registers[reg_a] + value;
 }
 
-pub fn mulr(registers: &mut [usize; 4], reg_a: usize, reg_b: usize, reg_c: usize) {
+pub fn mulr(registers: &mut [usize], reg_a: usize, reg_b: usize, reg_c: usize) {
     registers[reg_c] = registers[reg_a] * registers[reg_b];
 }
 
-pub fn muli(registers: &mut [usize; 4], reg_a: usize, value: usize, reg_c: usize) {
+pub fn muli(registers: &mut [usize], reg_a: usize, value: usize, reg_c: usize) {
     registers[reg_c] = registers[reg_a] * value;
 }
 
-pub fn banr(registers: &mut [usize; 4], reg_a: usize, reg_b: usize, reg_c: usize) {
+pub fn banr(registers: &mut [usize], reg_a: usize, reg_b: usize, reg_c: usize) {
     registers[reg_c] = registers[reg_a] & registers[reg_b];
 }
 
-pub fn bani(registers: &mut [usize; 4], reg_a: usize, value: usize, reg_c: usize) {
+pub fn bani(registers: &mut [usize], reg_a: usize, value: usize, reg_c: usize) {
     registers[reg_c] = registers[reg_a] & value;
 }
 
-pub fn borr(registers: &mut [usize; 4], reg_a: usize, reg_b: usize, reg_c: usize) {
+pub fn borr(registers: &mut [usize], reg_a: usize, reg_b: usize, reg_c: usize) {
     registers[reg_c] = registers[reg_a] | registers[reg_b];
 }
 
-pub fn bori(registers: &mut [usize; 4], reg_a: usize, value: usize, reg_c: usize) {
+pub fn bori(registers: &mut [usize], reg_a: usize, value: usize, reg_c: usize) {
     registers[reg_c] = registers[reg_a] | value;
 }
 
-pub fn setr(registers: &mut [usize; 4], reg_a: usize, _unused: usize, reg_c: usize) {
+pub fn setr(registers: &mut [usize], reg_a: usize, _unused: usize, reg_c: usize) {
     registers[reg_c] = registers[reg_a];
 }
 
-pub fn seti(registers: &mut [usize; 4], value: usize, _unused: usize, reg_c: usize) {
+pub fn seti(registers: &mut [usize], value: usize, _unused: usize, reg_c: usize) {
     registers[reg_c] = value;
 }
 
-pub fn gtir(registers: &mut [usize; 4], value: usize, reg_b: usize, reg_c: usize) {
+pub fn gtir(registers: &mut [usize], value: usize, reg_b: usize, reg_c: usize) {
     registers[reg_c] = if value > registers[reg_b] { 1 } else { 0 }
 }
 
-pub fn gtri(registers: &mut [usize; 4], reg_a: usize, value: usize, reg_c: usize) {
+pub fn gtri(registers: &mut [usize], reg_a: usize, value: usize, reg_c: usize) {
     registers[reg_c] = if registers[reg_a] > value { 1 } else { 0 }
 }
 
-pub fn gtrr(registers: &mut [usize; 4], reg_a: usize, reg_b: usize, reg_c: usize) {
+pub fn gtrr(registers: &mut [usize], reg_a: usize, reg_b: usize, reg_c: usize) {
     registers[reg_c] = if registers[reg_a] > registers[reg_b] {
         1
     } else {
@@ -66,15 +66,15 @@ pub fn gtrr(registers: &mut [usize; 4], reg_a: usize, reg_b: usize, reg_c: usize
     }
 }
 
-pub fn eqir(registers: &mut [usize; 4], value: usize, reg_b: usize, reg_c: usize) {
+pub fn eqir(registers: &mut [usize], value: usize, reg_b: usize, reg_c: usize) {
     registers[reg_c] = if value == registers[reg_b] { 1 } else { 0 }
 }
 
-pub fn eqri(registers: &mut [usize; 4], reg_a: usize, value: usize, reg_c: usize) {
+pub fn eqri(registers: &mut [usize], reg_a: usize, value: usize, reg_c: usize) {
     registers[reg_c] = if registers[reg_a] == value { 1 } else { 0 }
 }
 
-pub fn eqrr(registers: &mut [usize; 4], reg_a: usize, reg_b: usize, reg_c: usize) {
+pub fn eqrr(registers: &mut [usize], reg_a: usize, reg_b: usize, reg_c: usize) {
     registers[reg_c] = if registers[reg_a] == registers[reg_b] {
         1
     } else {
@@ -82,11 +82,11 @@ pub fn eqrr(registers: &mut [usize; 4], reg_a: usize, reg_b: usize, reg_c: usize
     }
 }
 
-pub type OpCode = fn(&mut [usize; 4], usize, usize, usize);
+pub type OpCode = fn(&mut [usize], usize, usize, usize);
 
 fn prepare_input() -> (Vec<[usize; 12]>, Vec<[usize; 4]>) {
-    let input_1 = fs::read_to_string(Path::new("./data/day16_1.txt")).unwrap();
-    let input_2 = fs::read_to_string(Path::new("./data/day16_2.txt")).unwrap();
+    let input_1 = fs::read_to_string(Path::new("../data/day16_1.txt")).unwrap();
+    let input_2 = fs::read_to_string(Path::new("../data/day16_2.txt")).unwrap();
 
     let mut first_part = Vec::new();
     let mut second_part = Vec::new();

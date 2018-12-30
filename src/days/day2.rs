@@ -5,7 +5,7 @@ use std::path::Path;
 
 pub fn first_star() -> Result<(), Box<Error + 'static>> {
     // Need to put the file opening in another variable else we would get a lifetime error
-    let file = fs::read_to_string(Path::new("./data/day2.txt"))?;
+    let file = fs::read_to_string(Path::new("../data/day2.txt"))?;
     let input = file.trim().split('\n');
     let mut double = 0;
     let mut triple = 0;
@@ -37,7 +37,7 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
 
 pub fn second_star() -> Result<(), Box<Error + 'static>> {
     // Need to put the file opening in another variable else we would get a lifetime error
-    let file = fs::read_to_string(Path::new("./data/day2.txt"))?;
+    let file = fs::read_to_string(Path::new("../data/day2.txt"))?;
     let input: Vec<&str> = file.trim().split('\n').map(|x| x.trim()).collect();
 
     for i in 0..input.len() {

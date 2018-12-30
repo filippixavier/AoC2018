@@ -46,7 +46,7 @@ impl Light {
 }
 
 fn get_input() -> Vec<Light> {
-    let input = fs::read_to_string(Path::new("./data/day10.txt")).unwrap();
+    let input = fs::read_to_string(Path::new("../data/day10.txt")).unwrap();
     let reg = Regex::new(r"(-?\d+).*?(-?\d+).*?(-?\d+).*?(-?\d+)").unwrap();
     let mut lights = Vec::<Light>::new();
 

@@ -9,7 +9,7 @@ use std::path::Path;
 use std::collections::HashMap;
 
 fn prepare_input() -> (String, HashMap<String, char>) {
-    let input = fs::read_to_string(Path::new("./data/day12.txt")).unwrap();
+    let input = fs::read_to_string(Path::new("../data/day12.txt")).unwrap();
     let initial_state_reg = Regex::new(r"((?:#|\.)+)").unwrap();
     let initial_state = if let Some(cap) = initial_state_reg.captures(&input) {
         cap[1].to_string()

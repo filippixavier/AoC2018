@@ -109,7 +109,7 @@ fn get_map() -> (
     HashMap<(usize, usize), char>,
     HashMap<(usize, usize), char>,
 ) {
-    let input = fs::read_to_string(Path::new("./data/day13.txt")).unwrap();
+    let input = fs::read_to_string(Path::new("../data/day13.txt")).unwrap();
     let mut carts = Vec::<Cart>::new();
     let mut rails = HashMap::<(usize, usize), char>::new();
     let mut occupied_tiles = HashMap::<(usize, usize), char>::new();

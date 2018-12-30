@@ -13,7 +13,7 @@ enum State {
 }
 
 fn prepare_input() -> (Vec<State>, usize) {
-    let input = fs::read_to_string(Path::new("./data/day18.txt")).unwrap();
+    let input = fs::read_to_string(Path::new("../data/day18.txt")).unwrap();
     let mut result = Vec::new();
     let mut count = 0;
     let mut stop_counting = false;

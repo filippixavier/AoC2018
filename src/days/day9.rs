@@ -8,7 +8,7 @@ use std::path::Path;
 use self::regex::Regex;
 
 pub fn first_star() -> Result<(), Box<Error + 'static>> {
-    let input = fs::read_to_string(Path::new("./data/day9.txt")).unwrap();
+    let input = fs::read_to_string(Path::new("../data/day9.txt")).unwrap();
     let reg = Regex::new(r"(\d+).+?(\d+)").unwrap();
 
     let mut num_of_players = 0;
@@ -57,7 +57,7 @@ struct Marble {
 // Build it on release to speed up the process
 // Note: Apparently faster using a VecDeque and push/shift our way through
 pub fn second_star() -> Result<(), Box<Error + 'static>> {
-    let input = fs::read_to_string(Path::new("./data/day9.txt")).unwrap();
+    let input = fs::read_to_string(Path::new("../data/day9.txt")).unwrap();
     let reg = Regex::new(r"(\d+).+?(\d+)").unwrap();
 
     let mut num_of_players = 0;

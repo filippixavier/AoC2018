@@ -44,7 +44,7 @@ enum Clan {
 fn get_map() -> (Vec<Tile>, i32) {
     use self::Tile::*;
 
-    let input = fs::read_to_string(Path::new("./data/day15.txt")).unwrap();
+    let input = fs::read_to_string(Path::new("../data/day15.txt")).unwrap();
     let mut map = Vec::<Tile>::new();
     let mut line_size = 0;
 

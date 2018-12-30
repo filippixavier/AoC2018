@@ -15,7 +15,7 @@ type Output = (
 );
 
 fn prepare_inputs() -> Output {
-    let input = fs::read_to_string(Path::new("./data/day7.txt")).unwrap();
+    let input = fs::read_to_string(Path::new("../data/day7.txt")).unwrap();
     let reg = Regex::new(r"Step (\w) .* step (\w)").unwrap();
 
     let mut parent_to_childs = HashMap::<String, Vec<String>>::new();

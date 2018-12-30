@@ -18,7 +18,7 @@ enum Tile {
 }
 
 fn prepare_input() -> (Vec<Tile>, usize, usize, usize) {
-    let input = fs::read_to_string(Path::new("./data/day17.txt")).unwrap();
+    let input = fs::read_to_string(Path::new("../data/day17.txt")).unwrap();
     let range_reg = Regex::new(r"(x|y)=(\d+).*?(?:x|y)=(\d+)\.+(\d+)").unwrap();
 
     let (mut min_x, mut min_y, mut max_x, mut max_y) = (None, None, None, None);

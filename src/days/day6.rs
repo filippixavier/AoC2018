@@ -46,7 +46,7 @@ struct Point {
  * Fin
  */
 pub fn first_star() -> Result<(), Box<Error + 'static>> {
-    let input = fs::read_to_string(Path::new("./data/day6.txt"))?;
+    let input = fs::read_to_string(Path::new("../data/day6.txt"))?;
     let reg = Regex::new(r"(?P<x>\d+), (?P<y>\d+)").unwrap();
 
     let mut sources_list = HashMap::<(i32, i32), Source>::new();
@@ -272,7 +272,7 @@ const MAX_MANHATTAN_DIST: i32 = 10000;
  * Fin
  */
 pub fn second_star() -> Result<(), Box<Error + 'static>> {
-    let input = fs::read_to_string(Path::new("./data/day6.txt"))?;
+    let input = fs::read_to_string(Path::new("../data/day6.txt"))?;
     let reg = Regex::new(r"(?P<x>\d+), (?P<y>\d+)").unwrap();
 
     let mut sources = Vec::<(i32, i32)>::new();

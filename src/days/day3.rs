@@ -8,7 +8,7 @@ use std::path::Path;
 use self::regex::Regex;
 
 pub fn first_star() -> Result<(), Box<Error + 'static>> {
-    let input = fs::read_to_string(Path::new("./data/day3.txt"))?;
+    let input = fs::read_to_string(Path::new("../data/day3.txt"))?;
     // The starting r negate the need to escape special char in a string
     let re =
         Regex::new(r"(?P<id>\d+) @ (?P<left>\d+),(?P<top>\d+): (?P<width>\d+)x(?P<height>\d+)")
@@ -40,7 +40,7 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
 
 // Could most probably do both star in on code, and/or use HashMap/HashSet more creatively
 pub fn second_star() -> Result<(), Box<Error + 'static>> {
-    let input = fs::read_to_string(Path::new("./data/day3.txt"))?;
+    let input = fs::read_to_string(Path::new("../data/day3.txt"))?;
     let re =
         Regex::new(r"(?P<id>\d+) @ (?P<left>\d+),(?P<top>\d+): (?P<width>\d+)x(?P<height>\d+)")
             .unwrap();

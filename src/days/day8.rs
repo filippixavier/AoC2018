@@ -3,7 +3,7 @@ use std::fs;
 use std::path::Path;
 
 fn prepare_input() -> Vec<usize> {
-    let file = fs::read_to_string(Path::new("./data/day8.txt")).unwrap();
+    let file = fs::read_to_string(Path::new("../data/day8.txt")).unwrap();
     file.trim()
         .split(' ')
         .map(|value| value.parse::<usize>().unwrap())

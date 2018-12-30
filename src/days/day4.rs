@@ -10,7 +10,7 @@ use self::regex::Captures;
 use self::regex::Regex;
 
 pub fn first_star() -> Result<(), Box<Error + 'static>> {
-    let file = fs::read_to_string(Path::new("./data/day4.txt"))?
+    let file = fs::read_to_string(Path::new("../data/day4.txt"))?
         .trim()
         .to_string();
     let mut input = file.lines().collect::<Vec<_>>();
