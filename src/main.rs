@@ -1,78 +1,45 @@
+#![allow(dead_code)]
 // Note: look into build.rs to just rewrite mod day1 into mod dayx without all the cfg
+mod days;
 
 #[cfg(all(feature = "day1", not(feature = "nday")))]
-mod day1;
+use days::day1::*;
 #[cfg(feature = "day10")]
-mod day10;
+use days::day10::*;
 #[cfg(feature = "day11")]
-mod day11;
+use days::day11::*;
 #[cfg(feature = "day12")]
-mod day12;
+use days::day12::*;
 #[cfg(feature = "day13")]
-mod day13;
+use days::day13::*;
 #[cfg(feature = "day14")]
-mod day14;
+use days::day14::*;
 #[cfg(feature = "day15")]
-mod day15;
+use days::day15::*;
 #[cfg(feature = "day16")]
-mod day16;
+use days::day16::*;
 #[cfg(feature = "day17")]
-mod day17;
+use days::day17::*;
 #[cfg(feature = "day18")]
-mod day18;
+use days::day18::*;
+#[cfg(feature = "day19")]
+use days::day19::*;
 #[cfg(feature = "day2")]
-mod day2;
+use days::day2::*;
 #[cfg(feature = "day3")]
-mod day3;
+use days::day3::*;
 #[cfg(feature = "day4")]
-mod day4;
+use days::day4::*;
 #[cfg(feature = "day5")]
-mod day5;
+use days::day5::*;
 #[cfg(feature = "day6")]
-mod day6;
+use days::day6::*;
 #[cfg(feature = "day7")]
-mod day7;
+use days::day7::*;
 #[cfg(feature = "day8")]
-mod day8;
+use days::day8::*;
 #[cfg(feature = "day9")]
-mod day9;
-
-#[cfg(all(feature = "day1", not(feature = "nday")))]
-use day1::*;
-#[cfg(feature = "day10")]
-use day10::*;
-#[cfg(feature = "day11")]
-use day11::*;
-#[cfg(feature = "day12")]
-use day12::*;
-#[cfg(feature = "day13")]
-use day13::*;
-#[cfg(feature = "day14")]
-use day14::*;
-#[cfg(feature = "day15")]
-use day15::*;
-#[cfg(feature = "day16")]
-use day16::*;
-#[cfg(feature = "day17")]
-use day17::*;
-#[cfg(feature = "day18")]
-use day18::*;
-#[cfg(feature = "day2")]
-use day2::*;
-#[cfg(feature = "day3")]
-use day3::*;
-#[cfg(feature = "day4")]
-use day4::*;
-#[cfg(feature = "day5")]
-use day5::*;
-#[cfg(feature = "day6")]
-use day6::*;
-#[cfg(feature = "day7")]
-use day7::*;
-#[cfg(feature = "day8")]
-use day8::*;
-#[cfg(feature = "day9")]
-use day9::*;
+use days::day9::*;
 
 fn main() {
     match first_star() {

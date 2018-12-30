@@ -30,7 +30,7 @@ struct Cart {
 
 impl Cart {
     fn turn_left(&mut self) {
-        use day13::Orientation::*;
+        use days::day13::Orientation::*;
         self.direction = match self.direction {
             (0, 1) => (1, 0),
             (1, 0) => (0, -1),
@@ -48,7 +48,7 @@ impl Cart {
     }
 
     fn turn_right(&mut self) {
-        use day13::Orientation::*;
+        use days::day13::Orientation::*;
         self.direction = match self.direction {
             (0, 1) => (-1, 0),
             (-1, 0) => (0, -1),
@@ -65,7 +65,7 @@ impl Cart {
     }
 
     fn handle_slash(&mut self, slash: char) {
-        use day13::Orientation::*;
+        use days::day13::Orientation::*;
         match (&self.orientation, slash) {
             (Up, '/') => self.turn_right(),
             (Up, '\\') => self.turn_left(),
@@ -80,7 +80,7 @@ impl Cart {
     }
 
     fn handle_crossroad(&mut self) {
-        use day13::Turn::*;
+        use days::day13::Turn::*;
         self.cross_turn = match self.cross_turn {
             Left => {
                 self.turn_left();
