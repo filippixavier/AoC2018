@@ -3,7 +3,9 @@ use std::error::Error;
 use std::fs;
 use std::path::Path;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+use std::collections::HashMap;
+
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 enum State {
     Open,
     Trees,
@@ -167,5 +169,30 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
 }
 
 pub fn second_star() -> Result<(), Box<Error + 'static>> {
+    let (mut map, line_size) = prepare_input();
+    let mut result = map.iter().filter(|&x| *x == State::Trees).count()
+        * map.iter().filter(|&x| *x == State::Lumberyard).count();
+    let mut map_states = HashMap::new();
+    map_states.insert(map.clone(), 0);
+
+    let mut results = Vec::new();
+    let mut new_map;
+    for i in 0..1000000000 {
+        new_map = evolve(&map, line_size);
+        result = new_map.iter().filter(|&x| *x == State::Trees).count()
+            * new_map.iter().filter(|&x| *x == State::Lumberyard).count();
+        if let Some(old_index) = map_states.insert(new_map.clone(), i) {
+            let cycle: Vec<_> = results.drain(old_index..).collect();
+            // Don't forget the -1: the range is [0, 1000000000[
+            result = cycle[(1000000000 - i - 1) % cycle.len()];
+            break;
+        } else {
+            results.push(result);
+        }
+
+        map = new_map;
+    }
+    println!("Second star result: {}", result);
+
     Ok(())
 }
