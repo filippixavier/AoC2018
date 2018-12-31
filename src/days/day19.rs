@@ -13,7 +13,7 @@ struct Operation {
     fun: OpCode,
     arg_1: usize,
     arg_2: usize,
-    arg_3: usize
+    arg_3: usize,
 }
 
 fn prepare_input() -> (usize, Vec<Operation>) {
@@ -27,25 +27,110 @@ fn prepare_input() -> (usize, Vec<Operation>) {
     }
 
     for cap in ins_reg.captures_iter(&input) {
-        let (ins_name, arg_1, arg_2, arg_3) = (cap[1].to_string(), cap[2].parse::<usize>().unwrap(), cap[3].parse::<usize>().unwrap(), cap[4].parse::<usize>().unwrap());
+        let (ins_name, arg_1, arg_2, arg_3) = (
+            cap[1].to_string(),
+            cap[2].parse::<usize>().unwrap(),
+            cap[3].parse::<usize>().unwrap(),
+            cap[4].parse::<usize>().unwrap(),
+        );
         let new_instruction = match ins_name.as_str() {
-            "addr" => Operation{fun: addr, arg_1, arg_2, arg_3},
-            "addi" => Operation{fun: addi, arg_1, arg_2, arg_3},
-            "mulr" => Operation{fun: mulr, arg_1, arg_2, arg_3},
-            "muli" => Operation{fun: muli, arg_1, arg_2, arg_3},
-            "banr" => Operation{fun: banr, arg_1, arg_2, arg_3},
-            "bani" => Operation{fun: bani, arg_1, arg_2, arg_3},
-            "borr" => Operation{fun: borr, arg_1, arg_2, arg_3},
-            "bori" => Operation{fun: bori, arg_1, arg_2, arg_3},
-            "setr" => Operation{fun: setr, arg_1, arg_2, arg_3},
-            "seti" => Operation{fun: seti, arg_1, arg_2, arg_3},
-            "gtir" => Operation{fun: gtir, arg_1, arg_2, arg_3},
-            "gtri" => Operation{fun: gtri, arg_1, arg_2, arg_3},
-            "gtrr" => Operation{fun: gtrr, arg_1, arg_2, arg_3},
-            "eqir" => Operation{fun: eqir, arg_1, arg_2, arg_3},
-            "eqri" => Operation{fun: eqri, arg_1, arg_2, arg_3},
-            "eqrr" => Operation{fun: eqrr, arg_1, arg_2, arg_3},
-            _ => unreachable!()
+            "addr" => Operation {
+                fun: addr,
+                arg_1,
+                arg_2,
+                arg_3,
+            },
+            "addi" => Operation {
+                fun: addi,
+                arg_1,
+                arg_2,
+                arg_3,
+            },
+            "mulr" => Operation {
+                fun: mulr,
+                arg_1,
+                arg_2,
+                arg_3,
+            },
+            "muli" => Operation {
+                fun: muli,
+                arg_1,
+                arg_2,
+                arg_3,
+            },
+            "banr" => Operation {
+                fun: banr,
+                arg_1,
+                arg_2,
+                arg_3,
+            },
+            "bani" => Operation {
+                fun: bani,
+                arg_1,
+                arg_2,
+                arg_3,
+            },
+            "borr" => Operation {
+                fun: borr,
+                arg_1,
+                arg_2,
+                arg_3,
+            },
+            "bori" => Operation {
+                fun: bori,
+                arg_1,
+                arg_2,
+                arg_3,
+            },
+            "setr" => Operation {
+                fun: setr,
+                arg_1,
+                arg_2,
+                arg_3,
+            },
+            "seti" => Operation {
+                fun: seti,
+                arg_1,
+                arg_2,
+                arg_3,
+            },
+            "gtir" => Operation {
+                fun: gtir,
+                arg_1,
+                arg_2,
+                arg_3,
+            },
+            "gtri" => Operation {
+                fun: gtri,
+                arg_1,
+                arg_2,
+                arg_3,
+            },
+            "gtrr" => Operation {
+                fun: gtrr,
+                arg_1,
+                arg_2,
+                arg_3,
+            },
+            "eqir" => Operation {
+                fun: eqir,
+                arg_1,
+                arg_2,
+                arg_3,
+            },
+            "eqri" => Operation {
+                fun: eqri,
+                arg_1,
+                arg_2,
+                arg_3,
+            },
+            "eqrr" => Operation {
+                fun: eqrr,
+                arg_1,
+                arg_2,
+                arg_3,
+            },
+            _ => unreachable!(),
         };
         instructions.push(new_instruction);
     }
@@ -56,7 +141,7 @@ fn prepare_input() -> (usize, Vec<Operation>) {
 pub fn first_star() -> Result<(), Box<Error + 'static>> {
     let (reg_i, instructions) = prepare_input();
     let mut regs: [usize; 6] = [0; 6];
-   loop {
+    loop {
         let i_pointer = regs[reg_i];
         if let Some(operation) = instructions.get(i_pointer) {
             (operation.fun)(&mut regs, operation.arg_1, operation.arg_2, operation.arg_3);
@@ -70,5 +155,21 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
 }
 
 pub fn second_star() -> Result<(), Box<Error + 'static>> {
+    // An optimized translation of the input
+    let target = 10551403;
+    let mut current: i64 = 0;
+    let mut count = 0;
+
+    while current <= target / 2 {
+        current += 1;
+        if (target / current) * current == target {
+            count += current;
+        }
+    }
+    println!("Reg 0 value: {}", count + target);
     Ok(())
 }
+
+// y = 5 + 8x
+// y - 5 = 8x
+//
