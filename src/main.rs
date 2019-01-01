@@ -1,4 +1,6 @@
 #![allow(dead_code)]
+use std::time::Instant;
+
 // Note: look into build.rs to just rewrite mod day1 into mod dayx without all the cfg
 mod days;
 
@@ -44,6 +46,7 @@ use days::day8::*;
 use days::day9::*;
 
 fn main() {
+    let now = Instant::now();
     match first_star() {
         Err(x) => {
             println!("Error: {:?}", x);
@@ -60,4 +63,6 @@ fn main() {
             println!("Second Star: Succeed!");
         }
     }
+    let end = now.elapsed();
+    println!("{}.{}", end.as_secs(), end.subsec_millis());
 }
