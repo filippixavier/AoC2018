@@ -68,23 +68,15 @@ pub fn second_star() -> Result<(), Box<Error + 'static>> {
         let result = first_score + second_score;
         if result >= 10 {
             recipes_score.push(result / 10);
-            if recipes_score.len() > input.len() {
-                if recipes_score[(recipes_score.len() - input.len())..recipes_score.len()]
-                    == input[0..input.len()]
-                {
+            if recipes_score.len() > input.len() && recipes_score[(recipes_score.len() - input.len())..recipes_score.len()] == input[0..input.len()] {
                     break;
-                }
             }
             // Note: could not work in case of inputs with overlapping elements such as 10101 as the second 101 would be discarded
         }
         recipes_score.push(result % 10);
 
-        if recipes_score.len() > input.len() {
-            if recipes_score[(recipes_score.len() - input.len())..recipes_score.len()]
-                == input[0..input.len()]
-            {
-                break;
-            }
+        if recipes_score.len() > input.len() && recipes_score[(recipes_score.len() - input.len())..recipes_score.len()] == input[0..input.len()] {
+            break;
         }
 
         first_index = (first_index + first_score + 1) % recipes_score.len();

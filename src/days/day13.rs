@@ -104,10 +104,12 @@ impl Iterator for Cart {
     }
 }
 
+type Railroads = HashMap<(usize, usize), char>;
+
 fn get_map() -> (
     Vec<Cart>,
-    HashMap<(usize, usize), char>,
-    HashMap<(usize, usize), char>,
+    Railroads,
+    Railroads,
 ) {
     let input = fs::read_to_string(Path::new("../data/day13.txt")).unwrap();
     let mut carts = Vec::<Cart>::new();

@@ -177,14 +177,14 @@ pub fn second_star() -> Result<(), Box<Error + 'static>> {
 
     let mut results = Vec::new();
     let mut new_map;
-    for i in 0..1000000000 {
+    for i in 0..1_000_000_000 {
         new_map = evolve(&map, line_size);
         result = new_map.iter().filter(|&x| *x == State::Trees).count()
             * new_map.iter().filter(|&x| *x == State::Lumberyard).count();
         if let Some(old_index) = map_states.insert(new_map.clone(), i) {
             let cycle: Vec<_> = results.drain(old_index..).collect();
             // Don't forget the -1: the range is [0, 1000000000[
-            result = cycle[(1000000000 - i - 1) % cycle.len()];
+            result = cycle[(1_000_000_000 - i - 1) % cycle.len()];
             break;
         } else {
             results.push(result);

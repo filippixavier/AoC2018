@@ -63,7 +63,7 @@ fn pots_values(steps: i64) -> i64 {
         if let Some(found) = all_pots_reg.find(&state.clone()) {
             let capture = &state[found.start()..found.end()].to_string();
             // Shortcut since in my case the input have a cycle of 1, shifting to the right
-            if states.iter().position(|x| *x == *capture).is_some() {
+            if states.iter().any(|x| *x == *capture) {
                 println!("{}, {}", steps, i);
                 start += steps - 1 - i; // -1 since the range is [0, steps[
                 break;
