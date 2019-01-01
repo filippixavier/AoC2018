@@ -70,5 +70,19 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
 }
 
 pub fn second_star() -> Result<(), Box<Error + 'static>> {
+    let (reg_i, instructions) = prepare_input();
+    let mut regs: [usize; 6] = [0; 6];
+    regs[0] = 1;
+    loop {
+        let i_pointer = regs[reg_i];
+        if let Some(operation) = instructions.get(i_pointer) {
+            (operation.fun)(&mut regs, operation.arg_1, operation.arg_2, operation.arg_3);
+            regs[reg_i] += 1;
+        } else {
+            break;
+        }
+        // println!("{}", regs[reg_i]);
+    }
+    println!("Reg 0 value: {}", regs[0]);
     Ok(())
 }
