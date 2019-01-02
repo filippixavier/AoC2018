@@ -9,15 +9,15 @@ use std::path::Path;
 
 use self::regex::Regex;
 
-struct Operation {
-    fun: OpCode,
-    arg_1: usize,
-    arg_2: usize,
-    arg_3: usize,
+pub struct Operation {
+    pub fun: OpCode,
+    pub arg_1: usize,
+    pub arg_2: usize,
+    pub arg_3: usize,
 }
 
-fn prepare_input() -> (usize, Vec<Operation>) {
-    let input = fs::read_to_string(Path::new("../data/day19.txt")).unwrap();
+pub fn prepare_input(path: &str) -> (usize, Vec<Operation>) {
+    let input = fs::read_to_string(Path::new(path)).unwrap();
     let id_reg = Regex::new(r"#ip (\d+)").unwrap();
     let ins_reg = Regex::new(r"(\w+) (\d+) (\d+) (\d+)").unwrap();
     let mut reg = 0;
@@ -139,7 +139,7 @@ fn prepare_input() -> (usize, Vec<Operation>) {
 }
 
 pub fn first_star() -> Result<(), Box<Error + 'static>> {
-    let (reg_i, instructions) = prepare_input();
+    let (reg_i, instructions) = prepare_input("../data/day19.txt");
     let mut regs: [usize; 6] = [0; 6];
     loop {
         let i_pointer = regs[reg_i];
