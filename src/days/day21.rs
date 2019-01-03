@@ -1,6 +1,7 @@
 use days::day19::*;
 
 use std::error::Error;
+use std::collections::HashSet;
 
 pub fn first_star() -> Result<(), Box<Error + 'static>> {
     let (reg_i, instructions) = prepare_input("./data/day21.txt");
@@ -40,10 +41,11 @@ fn exec(instructions: &Vec<Operation>, reg_i: usize, start: usize) -> usize {
 }
 
 pub fn second_star() -> Result<(), Box<Error + 'static>> {
-    let a: u64 = 1;
+    let mut a: u64 = 0;
     let mut d: u64 = 10504829;
     let mut e: u64;
     let mut f: u64;
+    let mut set = HashSet::<u64>::new();
     'main: loop {
         e = d | 65_536;
         d = 10_649_702;
@@ -56,9 +58,16 @@ pub fn second_star() -> Result<(), Box<Error + 'static>> {
             d = d & 16_777_215;
 
             if 256 > e {
+                if !set.insert(d) {
+                    // Not sure I do understand how it works: basically, once we get our first duplicate D, it means that the previous value was the last value to be unique as any further one could be a duplicate
+                    // It's also the our lowest with the most instructions as any further ones could have halted the program earlier
+                    // Probably involve some math magic regarding modulo but couldn't figure that out, in short, it was pure luck, sorry. 
+                    break 'main;
+                }
                 if d == a {
                     break 'main;
                 } else {
+                    a = d;
                     continue 'main;
                 }
             } else {
@@ -66,7 +75,9 @@ pub fn second_star() -> Result<(), Box<Error + 'static>> {
             }
         }
     }
+    println!("{}", a);
     Ok(())
 }
 // 1149790  too low
 // 16777215 too high (MAX)
+// 6339601
