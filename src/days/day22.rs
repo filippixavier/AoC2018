@@ -6,6 +6,9 @@ use std::error::Error;
 use std::fs;
 use std::path::Path;
 
+use std::collections::HashMap;
+use std::collections::HashSet;
+
 #[derive(Debug)]
 enum Region {
     Rocky,
@@ -66,6 +69,121 @@ fn visualize(map: &[u64], line_size: usize) {
     println!("{}", txt);
 }
 
+fn display_path(path: &HashMap<(usize, usize), (usize, usize)>, target_index: usize) {
+    let mut current = (target_index, 1);
+    print!("{}, {}", current.0, current.1);
+
+    loop {
+        if let Some(pat) = path.get(&current) {
+            current = *pat;
+            print!(" <- {}, {}", current.0, current.1);
+        } else {
+            break;
+        }
+    }
+
+    println!("");
+}
+
+fn dijkstra(map: &[u64], line_size: usize, target:(usize, usize)) -> u64 {
+    let target_index = target.0 + target.1 * line_size;
+    // A bit tough memory wise, but it helps me visualize the algorithm for now
+    // Map for no equipement, torch, and climbing
+    let maps = [map.iter().map(|&x| x > 0).collect::<Vec<bool>>(), map.iter().map(|&x| x != 1).collect::<Vec<bool>>(), map.iter().map(|&x| x < 2).collect::<Vec<bool>>()];
+
+    let mut visited_nodes = HashSet::<(usize, usize)>::new();
+    let mut distance_scores = HashMap::<(usize, usize), u64>::new();
+
+    let mut from_node = HashMap::<(usize, usize), (usize, usize)>::new(); // TO -> FROM
+
+    distance_scores.insert((0, 1), 0);
+
+    let mut visitable_nodes = vec![(0, 1)];
+
+    while !visitable_nodes.is_empty() {
+        visitable_nodes.sort_by(|&a, &b| distance_scores[&b].cmp(&distance_scores[&a]));
+        let node = visitable_nodes.pop().unwrap();
+        visited_nodes.insert(node);
+        let dist = *distance_scores.get(&node).unwrap();
+
+        /*if node == (target_index, 1) {
+            // display_path(&from_node, target_index);
+            return dist;
+        }*/
+
+        // Left
+        if node.0 % line_size > 0 && maps[node.1][node.0 - 1] {
+            let next_node = (node.0 - 1, node.1);
+            let next_dist = dist + 1;
+            if insert_distance_score(&visited_nodes,&mut visitable_nodes, &mut distance_scores, next_node, next_dist) == true {
+                from_node.insert(next_node, node);
+            }
+        }
+        // Right
+        if (node.0 + 1) % line_size < line_size - 1 && maps[node.1][node.0 + 1] {
+            let next_node = (node.0 + 1, node.1);
+            let next_dist = dist + 1;
+            if insert_distance_score(&visited_nodes,&mut visitable_nodes, &mut distance_scores, next_node, next_dist) == true {
+                from_node.insert(next_node, node);
+            }
+        }
+        // Up
+        if node.0 >= line_size && maps[node.1][node.0 - line_size] {
+            let next_node = (node.0 - line_size, node.1);
+            let next_dist = dist + 1;
+            if insert_distance_score(&visited_nodes,&mut visitable_nodes, &mut distance_scores, next_node, next_dist) == true {
+                from_node.insert(next_node, node);
+            }
+        }
+
+        // Down
+        if node.0 + line_size < map.len() && maps[node.1][node.0 + line_size] {
+            let next_node = (node.0 + line_size, node.1);
+            let next_dist = dist + 1;
+            if insert_distance_score(&visited_nodes,&mut visitable_nodes, &mut distance_scores, next_node, next_dist) == true {
+                from_node.insert(next_node, node);
+            }
+        }
+
+        // Other maps
+        if maps[(node.1 + 1) % 3][node.0] {
+            let next_node = (node.0, (node.1 + 1) % 3);
+            let next_dist = dist + 7;
+            if insert_distance_score(&visited_nodes,&mut visitable_nodes, &mut distance_scores, next_node, next_dist) == true {      
+                from_node.insert(next_node, node);
+            }
+        }
+
+        if maps[(node.1 + 2) % 3][node.0] {
+            let next_node = (node.0, (node.1 + 2) % 3);
+            let next_dist = dist + 7;
+            if insert_distance_score(&visited_nodes,&mut visitable_nodes, &mut distance_scores, next_node, next_dist) == true {
+                from_node.insert(next_node, node);
+            }
+        }
+    }
+
+    return *distance_scores.get(&(target_index, 1)).unwrap();
+}
+
+fn insert_distance_score(visited_nodes: &HashSet<(usize, usize)>, visitable_nodes: &mut Vec<(usize, usize)>, distance_scores: &mut HashMap<(usize, usize), u64>, node_pos: (usize, usize), node_dist: u64) -> bool {
+    if !visited_nodes.contains(&node_pos) {
+        if distance_scores.contains_key(&node_pos) {
+            if let Some(prev_dist) = distance_scores.get_mut(&node_pos) {
+                if *prev_dist > node_dist {
+                    *prev_dist = node_dist;
+                    return true;
+                }
+            }
+        } else {
+            distance_scores.insert(node_pos, node_dist);
+            visitable_nodes.push(node_pos);
+            return true;
+        }
+    }
+    false
+}
+
 
 pub fn first_star() -> Result<(), Box<Error + 'static>> {
     let values = prepare_input();
@@ -78,5 +196,12 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
 }
 
 pub fn second_star() -> Result<(), Box<Error + 'static>> {
+    let values = prepare_input();
+    let map = create_map(values[0], (values[1], values[2]), (values[1] + 6, values[2] + 6));
+    // visualize(&map, values[1] + 6);
+    let distance = dijkstra(&map, values[1] + 6, (values[1], values[2]));
+
+    println!("Fastest way to the target take {} minutes", distance);
+    // 1020 too high
     Ok(())
 }
