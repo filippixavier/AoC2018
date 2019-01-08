@@ -156,7 +156,7 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
 
 pub fn second_star() -> Result<(), Box<Error + 'static>> {
     // An optimized translation of the input
-    let target = 10551403;
+    let target = 10_551_403;
     let mut current: i64 = 0;
     let mut count = 0;
 
