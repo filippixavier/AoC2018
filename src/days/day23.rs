@@ -13,6 +13,36 @@ struct Drone {
 	radius: u64
 }
 
+#[derive(Clone, Copy, Debug)]
+struct Field {
+	min_x: i64,
+	min_y: i64,
+	min_z: i64,
+	max_x: i64,
+	max_y: i64,
+	max_z: i64,
+}
+
+impl Field {
+	fn intersect(&self, other: &Field) -> Option<Field> {
+		None
+	}
+}
+
+impl From<Drone> for Field {
+	fn from(drone: Drone) -> Self {
+		let min_x = drone.position.0 - drone.radius as i64;
+		let min_y = drone.position.1 - drone.radius as i64;
+		let min_z = drone.position.2 - drone.radius as i64;
+
+		let max_x = drone.position.0 + drone.radius as i64;
+		let max_y = drone.position.1 + drone.radius as i64;
+		let max_z = drone.position.2 + drone.radius as i64;
+
+		Field{min_x, max_x, min_y, max_y, min_z, max_z}
+	}
+}
+
 fn prepare_input() -> Vec<Drone> {
 	let input = fs::read_to_string(Path::new("./data/day23.txt")).unwrap();
     let reg = Regex::new(r"<(-?\d+),(-?\d+),(-?\d+)>.*?(\d+)").unwrap();
@@ -51,5 +81,12 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
 }
 
 pub fn second_star() -> Result<(), Box<Error + 'static>> {
+	let nanodrones = prepare_input();
+	let mut drones_fields = nanodrones.iter().map(|x| Field::from(*x)).collect::<Vec<_>>();
+
+
+
+
+
 	Ok(())
 }
