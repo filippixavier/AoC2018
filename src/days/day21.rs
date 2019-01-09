@@ -78,6 +78,3 @@ pub fn second_star() -> Result<(), Box<Error + 'static>> {
     println!("{}", a);
     Ok(())
 }
-// 1149790  too low
-// 16777215 too high (MAX)
-// 6339601
