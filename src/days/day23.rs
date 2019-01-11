@@ -73,8 +73,11 @@ pub fn second_star() -> Result<(), Box<Error + 'static>> {
     // Algorithm switch: instead of computing every intersecting area, and recursively computing new intersecting area from the previous ones until none can be derived (which I don't know how to do)
     // Let's perform a dichotomial search
 
-    let mut areas: Vec<(Area, Vec<Drone>)> = vec![(Area{min_x, max_x, min_y, max_y, min_z, max_z}, nanodrones)];
-    while !areas.is_empty() {
+    let mut areas: Vec<(Area, Vec<Drone>)> = vec![(Area{min_x, max_x, min_y, max_y, min_z, max_z}, nanodrones.clone())];
+    let mut candidates: Vec<(Area, Vec<Drone>)> = Vec::new();
+    while candidates.is_empty() {
+        areas.sort_by(|(_, drones_a), (_, drones_b)| drones_a.len().cmp(&drones_b.len()));
+
         let (area, drones_in_range) = areas.pop().unwrap();
         let len_x = (area.max_x - area.min_x).abs();
         let len_y = (area.max_y - area.min_y).abs();
@@ -89,24 +92,57 @@ pub fn second_star() -> Result<(), Box<Error + 'static>> {
         let mut first_area = area;
         let mut second_area = area;
 
-        // let filter_func_a;
-        // let filter_func_b;
+        let first_area_drones;
+        let second_area_drones;
 
         if max == len_z {
-            first_area.max_z -= len_z / 2;
-            second_area.min_z += len_z / 2;
-           /* filter_func_a: |x| ;
-            filter_func_a: |y| ;*/
+            first_area.max_z -= cmp::max(1, len_z / 2);
+            second_area.min_z += cmp::max(1, len_z / 2);
+
+            first_area_drones = drones_in_range.iter().cloned().filter(|x| x.position.2 - x.radius as i64 <= first_area.max_z).collect::<Vec<Drone>>();
+            second_area_drones = drones_in_range.iter().cloned().filter(|x| x.position.2 + x.radius as i64 >= second_area.min_z).collect::<Vec<Drone>>();
+
         } else if max == len_y {
-            first_area.max_y -= len_y / 2;
-            second_area.min_y += len_y / 2;
+            first_area.max_y -= cmp::max(1, len_y / 2);
+            second_area.min_y += cmp::max(1, len_y / 2);
+
+            first_area_drones = drones_in_range.iter().cloned().filter(|x| x.position.1 - x.radius as i64 <= first_area.max_y).collect::<Vec<Drone>>();
+            second_area_drones = drones_in_range.iter().cloned().filter(|x| x.position.1 + x.radius as i64 >= second_area.min_y).collect::<Vec<Drone>>();
+
         } else {
-            first_area.max_x -= len_x / 2;
-            second_area.min_x += len_x / 2;
+            first_area.max_x -= cmp::max(1, len_x / 2);
+            second_area.min_x += cmp::max(1, len_x / 2);
+
+            first_area_drones = drones_in_range.iter().cloned().filter(|x| x.position.0 - x.radius as i64 <= first_area.max_x).collect::<Vec<Drone>>();
+            second_area_drones = drones_in_range.iter().cloned().filter(|x| x.position.0 + x.radius as i64 >= second_area.min_x).collect::<Vec<Drone>>();
         }
 
-        /*let first_area_drones = drones_in_range.iter().cloned().filter(filter_func_a).collect::<Vec<Drone>>();
-        let second_area_drones = drones_in_range.iter().cloned().filter(filter_func_b).collect::<Vec<Drone>>();*/
+        if !first_area_drones.is_empty() {
+            if first_area.max_x == first_area.min_x && first_area.max_y == first_area.min_y && first_area.max_z == first_area.min_z {
+                candidates.push((first_area, first_area_drones));
+            } else {
+                areas.push((first_area, first_area_drones));
+            }
+        }
+
+        if !second_area_drones.is_empty() {
+            if second_area.max_x == second_area.min_x && second_area.max_y == second_area.min_y && second_area.max_z == second_area.min_z {
+                candidates.push((second_area, second_area_drones));
+            } else {
+                areas.push((second_area, second_area_drones));
+            }
+        }
+    }
+
+    candidates.sort_by(|(_, drones_a), (_, drones_b)| drones_a.len().cmp(&drones_b.len()));
+
+    for (zone, bots) in candidates.iter() {
+        println!("({}, {}, {}): {}", zone.min_x, zone.min_y, zone.min_z, bots.len());
+        for i in nanodrones.iter() {
+            if manhattan_dist((zone.min_x, zone.min_y, zone.min_z), i.position) > i.radius {
+                println!("Nope! ({}, {}, {}) {} is out of range", i.position.0, i.position.1, i.position.2, i.radius);
+            }
+        }
     }
 
     Ok(())
