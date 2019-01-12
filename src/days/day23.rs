@@ -161,9 +161,11 @@ pub fn second_star() -> Result<(), Box<Error + 'static>> {
         .position
         .2;
 
-    // Algorithm switch: instead of computing every intersecting area, and recursively computing new intersecting area from the previous ones until none can be derived (which I don't know how to do)
-    // Let's perform a dichotomial search
-
+    // Algorithm based a lot on what I've read on reddit without looking at the megathread, it still gave me the walkthrough through
+    // Create a cube containing every drone and their radius, and divide it in eight sub-cube
+    // For each sub-cube, check how many drones are in range by checking the distance between the drone and the closest point of the sub-cube to the drone
+    // Rince, repeat until sub-cube can't be divided
+    // Shortcut by filtering subcubes with a lower number of drone than the current answer 
     let mut areas: Vec<(Area, Vec<Drone>)> = vec![(
         Area {
             min_x,
