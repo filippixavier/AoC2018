@@ -212,16 +212,17 @@ fn insert_distance_score(
     node_dist: u64,
 ) -> bool {
     if !visited_nodes.contains(&node_pos) {
-        if distance_scores.contains_key(&node_pos) {
-            if let Some(prev_dist) = distance_scores.get_mut(&node_pos) {
-                if *prev_dist > node_dist {
-                    *prev_dist = node_dist;
-                    return true;
-                }
-            }
-        } else {
-            distance_scores.insert(node_pos, node_dist);
+        let mut created = false;
+        let prev_dist = distance_scores.entry(node_pos).or_insert_with(|| {
+            created = true;
+            node_dist
+        });
+
+        if created {
             visitable_nodes.push(node_pos);
+            return true;
+        } else if *prev_dist > node_dist {
+            *prev_dist = node_dist;
             return true;
         }
     }
