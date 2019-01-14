@@ -12,12 +12,15 @@ struct SpaceTimePoint {
     x: i32,
     y: i32,
     z: i32,
-    t: i32
+    t: i32,
 }
 
 impl SpaceTimePoint {
     fn manhattan_dist(&self, other: &SpaceTimePoint) -> i32 {
-        (self.x - other.x).abs() + (self.y - other.y).abs() + (self.z - other.z).abs() + (self.t - other.t).abs()
+        (self.x - other.x).abs()
+            + (self.y - other.y).abs()
+            + (self.z - other.z).abs()
+            + (self.t - other.t).abs()
     }
 }
 
@@ -28,11 +31,11 @@ fn prepare_input() -> Vec<SpaceTimePoint> {
     let mut points = Vec::new();
 
     for cap in point_reg.captures_iter(&input) {
-        points.push(SpaceTimePoint{
-            x: cap[1].parse().unwrap(), 
-            y: cap[2].parse().unwrap(), 
-            z: cap[3].parse().unwrap(), 
-            t: cap[4].parse().unwrap()
+        points.push(SpaceTimePoint {
+            x: cap[1].parse().unwrap(),
+            y: cap[2].parse().unwrap(),
+            z: cap[3].parse().unwrap(),
+            t: cap[4].parse().unwrap(),
         });
     }
 
@@ -50,7 +53,10 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
         let mut matching_constellations = vec![pt];
         while !constellations.is_empty() {
             let mut constellation = constellations.pop().unwrap();
-            if constellation.iter().any(|star| star.manhattan_dist(&pt) <= 3) {
+            if constellation
+                .iter()
+                .any(|star| star.manhattan_dist(&pt) <= 3)
+            {
                 matching_constellations.append(&mut constellation);
             } else {
                 non_matching_constellations.push(constellation);
