@@ -20,7 +20,7 @@ struct Group {
     initiative: usize,
     faction: usize,
     targeting: Option<usize>,
-    targeted: bool
+    targeted: bool,
 }
 
 impl Group {
@@ -28,7 +28,7 @@ impl Group {
         self.units * self.unit_power
     }
 
-    fn inflicted_damage(&self, damage: usize, atk_type: &String) -> usize {
+    fn inflicted_damage(&self, damage: usize, atk_type: &str) -> usize {
         let mut real_damage = damage;
 
         if let Some(ref weakness_list) = self.weaknesses {
@@ -48,6 +48,7 @@ impl Group {
 
     fn receive_damage(&mut self, damage: usize) -> bool {
         let lost_units = damage / self.unit_hp;
+
         self.units -= cmp::min(self.units, lost_units);
         self.units == 0
     }
@@ -76,7 +77,7 @@ fn prepare_input() -> Vec<Group> {
                 immunities = Some(immune_list[1].to_string());
             }
 
-            armies.push(Group{
+            armies.push(Group {
                 units: cap[1].parse().unwrap(),
                 unit_hp: cap[2].parse().unwrap(),
                 immunities,
@@ -86,7 +87,7 @@ fn prepare_input() -> Vec<Group> {
                 initiative: cap[6].parse().unwrap(),
                 faction: index,
                 targeting: None,
-                targeted: false
+                targeted: false,
             });
         }
     }
@@ -94,10 +95,10 @@ fn prepare_input() -> Vec<Group> {
     armies
 }
 
-pub fn first_star() -> Result<(), Box<Error + 'static>> {
-    let mut armies = prepare_input();
-
-    while armies.iter().filter(|x| x.faction == 0).count() > 0 && armies.iter().filter(|x| x.faction == 1).count() > 0 {
+fn fighting(mut armies: Vec<Group>) -> (usize, usize) {
+    while armies.iter().filter(|x| x.faction == 0).count() > 0
+        && armies.iter().filter(|x| x.faction == 1).count() > 0
+    {
         let mut armies_selection: Vec<usize> = (0..armies.len()).collect();
         let mut armies_attack: Vec<usize> = Vec::new();
         {
@@ -130,25 +131,34 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
                 faction = group.faction;
             }
 
-            if let Some((index, target)) = armies.iter_mut().enumerate().filter(|(_, target)| target.faction != faction && !target.targeted && target.inflicted_damage(total_power, &atk_type) != 0).max_by(|(_, t_a), (_, t_b)| {
-                let t_inflicted_a = t_a.inflicted_damage(total_power, &atk_type);
-                let t_inflicted_b = t_b.inflicted_damage(total_power, &atk_type);
-                let t_effective_p_a = t_a.total_power();
-                let t_effective_p_b = t_b.total_power();
+            if let Some((index, target)) = armies
+                .iter_mut()
+                .enumerate()
+                .filter(|(_, target)| {
+                    target.faction != faction
+                        && !target.targeted
+                        && target.inflicted_damage(total_power, &atk_type) != 0
+                })
+                .max_by(|(_, t_a), (_, t_b)| {
+                    let t_inflicted_a = t_a.inflicted_damage(total_power, &atk_type);
+                    let t_inflicted_b = t_b.inflicted_damage(total_power, &atk_type);
+                    let t_effective_p_a = t_a.total_power();
+                    let t_effective_p_b = t_b.total_power();
 
-                if t_inflicted_a != t_inflicted_b {
-                    t_inflicted_a.cmp(&t_inflicted_b)
-                } else if t_effective_p_a != t_effective_p_b {
-                    t_effective_p_a.cmp(&t_effective_p_b)
-                } else {
-                    t_a.initiative.cmp(&t_b.initiative)
-                }
-            }) {
+                    if t_inflicted_a != t_inflicted_b {
+                        t_inflicted_a.cmp(&t_inflicted_b)
+                    } else if t_effective_p_a != t_effective_p_b {
+                        t_effective_p_a.cmp(&t_effective_p_b)
+                    } else {
+                        t_a.initiative.cmp(&t_b.initiative)
+                    }
+                })
+            {
                 target.targeted = true;
                 target_index = Some(index);
             }
 
-            let group = armies.get_mut(group_id).unwrap();
+            let group = &mut armies[group_id];
             group.targeting = target_index;
 
             armies_attack.push(group_id);
@@ -163,6 +173,7 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
         }
 
         // ATTACC
+        let mut attacked = false;
         while !armies_attack.is_empty() {
             let attacker_id = armies_attack.pop().unwrap();
 
@@ -171,9 +182,9 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
             let atk_type;
 
             {
-                let attacker = armies.get_mut(attacker_id).unwrap();
+                let attacker = &mut armies[attacker_id];
 
-                if attacker.units == 0 || attacker.targeting.is_none() {
+                if attacker.targeting.is_none() {
                     attacker.targeting = None;
                     continue;
                 }
@@ -184,20 +195,37 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
                 attacker.targeting = None;
             }
 
-            let target = armies.get_mut(target_id).unwrap();
+            let target = &mut armies[target_id];
 
             total_power = target.inflicted_damage(total_power, &atk_type);
 
             target.targeted = false;
+            let before = target.units;
             target.receive_damage(total_power);
+            if before != target.units {
+                attacked = true;
+            }
+        }
+
+        if !attacked {
+            println!("OH OH.... INFINITE LOOP INCOMING! ABORT ATTEMPT");
+
+            return (0, 1);
         }
 
         armies = armies.iter().cloned().filter(|x| x.units > 0).collect();
     }
 
-    let answer = armies.iter().fold(0, |acc, group| {
-        acc + group.units
-    });
+    (
+        armies.iter().fold(0, |acc, group| acc + group.units),
+        armies.last().unwrap().faction,
+    )
+}
+
+pub fn first_star() -> Result<(), Box<Error + 'static>> {
+    let armies = prepare_input();
+
+    let (answer, _) = fighting(armies);
 
     println!("Winning army end up with {} units", answer);
 
@@ -205,5 +233,59 @@ pub fn first_star() -> Result<(), Box<Error + 'static>> {
 }
 
 pub fn second_star() -> Result<(), Box<Error + 'static>> {
+    let armies = prepare_input();
+
+    let (first_boost, _) = fighting(armies.to_vec());
+    let (mut min_boost, mut max_boost) = (0, first_boost);
+
+    // let mut boost = 1;
+
+    let mut answer = 0;
+
+    while max_boost != min_boost {
+        let boost = min_boost + (max_boost - min_boost) / 2;
+        let clones = armies
+            .iter()
+            .cloned()
+            .map(|mut x| {
+                if x.faction == 0 {
+                    x.unit_power += boost;
+                }
+                x
+            })
+            .collect::<Vec<Group>>();
+        let (new_answer, faction) = fighting(clones);
+
+        if faction == 1 {
+            min_boost = if boost == min_boost { max_boost } else { boost }
+        } else {
+            max_boost = if boost == min_boost { min_boost } else { boost };
+            answer = new_answer;
+        }
+    }
+
+    /*loop {
+        let clones = armies.iter().cloned().map(|mut x| {
+            if x.faction == 0 {
+                x.unit_power += boost;
+            }
+            x
+        }).collect::<Vec<Group>>();
+        let (new_answer, faction) = fighting(clones);
+
+        if faction == 0 {
+            answer = new_answer;
+            break;
+        }
+
+        boost += 1;
+    }*/
+
+    println!(
+        "Reindeer can survive with {} units, using a {} power boost",
+        answer, min_boost
+    );
+    // println!("answer: {}, {}", answer, boost);
+
     Ok(())
 }
