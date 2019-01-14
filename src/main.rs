@@ -38,6 +38,8 @@ use days::day22::*;
 use days::day23::*;
 #[cfg(feature = "day24")]
 use days::day24::*;
+#[cfg(feature = "day25")]
+use days::day25::*;
 #[cfg(feature = "day3")]
 use days::day3::*;
 #[cfg(feature = "day4")]
